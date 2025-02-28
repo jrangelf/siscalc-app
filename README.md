@@ -1,2 +1,2 @@
-# app-sicalc
+# app-siscalc
 Aplicativo Web Siscalc
