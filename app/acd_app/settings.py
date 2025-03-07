@@ -190,7 +190,7 @@ FILE_UPLOAD_HANDLERS = [
     'django.core.files.uploadhandler.TemporaryFileUploadHandler',
 ]
 
-TOKEN='AGU1234!'
+
 #TOKEN = os.environ.get('D_TOKEN')
 #MEDIA_URL = '/media/'
 #MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
