@@ -1,0 +1,82 @@
+{% extends 'cabecalho1.html' %}
+
+{% load static %}
+
+{% block title %}SICALC | Sugestões{% endblock %}
+
+{% block content %}
+		<p><strong><em>Esta área é destinada a receber sugestões dos usuários que estão testando
+			o SICALC. Também pode ser utilizada para comunicação de erros ou inconformidades.</em></strong></p>
+		
+		<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+
+		   <div class="container">
+			<image src="{% static 'my_images/angulo-duplo-pequeno-direito.png' %}" width="100"></image>
+			<p><center><h3 style="color: white;">SUGESTÕES / COMUNICADOS</h3></center>
+			
+			<p></div>
+		
+		</nav>
+
+		
+		<nav class="navbar navbar-dark bg-primary">
+		    
+			<!--<ul class="navbar-nav mr-auto"> -->
+		 <div class="col">   		      
+		    <form class="form-group" method="POST">
+		      {% csrf_token %}
+
+			 
+
+		      <textarea class="form-control" id="ex1" rows="2" name="item"></textarea>
+				<!--
+			  <input class="form-control mr-sm-2" type="search" placeholder="item" aria-label="Search" name="item">
+			-->
+			  <button class="btn btn-secondary " type="submit">Incluir</button>
+		    </form>
+
+		</div>
+		</nav>
+<hr/>
+
+{% if messages %}
+	{% for message in messages %}
+
+		<div class="alert alert-success" role="alert">
+  			{{ message }}
+  			<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    			<span aria-hidden="true">&times;</span>
+  			</button>
+		</div>		
+	{% endfor %}
+
+{% endif %}
+
+<br/>
+	{% if all_items %}
+	<table class="table table-bordered">
+		{% for things in all_items %}
+			{% if things.completed %}
+				<tr class="table-secondary">
+				<!--	<td class="striker"><a href="{% url 'edit' things.id %}">{{things.item}}</a></td> -->
+					<td class="striker">{{things.item}}</td>
+				<!--	
+					<td><center><a href="{% url 'uncross' things.id %}">Desmarcar</a></center></td>
+					<td><center><a href="{% url 'delete' things.id %}">Remover</a></center></td>
+				-->
+				</tr>
+			{% else %}
+				<tr>
+				<!--	<td><a href="{% url 'edit' things.id %}">{{things.item}}</a></td> -->
+					<td>{{things.item}}</td>
+				<!--
+					<td><center><a href="{% url 'cross_off' things.id %}">Marcar</a></center></td>
+					<td><center><a href="{% url 'delete' things.id %}">Remover</a></center></td>
+				-->
+				</tr>
+			{% endif %}			
+		{% endfor %}
+	</table>
+	{% endif %}
+
+{% endblock %}

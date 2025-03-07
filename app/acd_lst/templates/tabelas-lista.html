@@ -1,0 +1,347 @@
+{% extends 'cabecalho3.html' %}
+
+{% block title %}{{ contexto.tabela }}{% endblock %}
+
+{% block content %}
+
+{% load static %}
+
+
+<script>
+  function enviarTabela() {
+  // Obtendo os valores dos campos
+    const dataInicial = document.getElementById('campo1').value;
+    const dataFinal = document.getElementById('campo2').value;
+    const radios = document.getElementsByName('radio');
+    let formatoSelecionado = null;
+    // Verifica qual rádio foi selecionado
+    for (const radio of radios) {
+        if (radio.checked) {
+            formatoSelecionado = radio.value;
+            break;
+        }
+    }
+    // Validações
+    if (!dataInicial || !dataFinal) {
+        alert("Por favor, preencha todas as datas.");
+        return;
+    }
+    if (dataInicial > dataFinal) {
+        alert("A data inicial não pode ser maior que a data final.");
+        return;
+    }
+    if (!formatoSelecionado) {
+        alert("Por favor, selecione um formato (PDF ou Excel).");
+        return;
+    }
+    // Captura o conteúdo HTML da tabela
+    const tabelaHTML = document.querySelector('table.table').outerHTML;      
+    // Coloca o HTML no campo oculto do formulário
+    document.getElementById('html_content').value = tabelaHTML;      
+    // Submete o formulário
+    document.getElementById('form-relatorio').submit();  
+  }
+</script>
+
+
+<form method="post" id="form-relatorio" enctype="multipart/form-data" action="{% url 'leitura' %}"> 
+<!-- <form method="post" id="form-relatorio" enctype="multipart/form-data"> --> 
+  {% csrf_token %}
+  <textarea id="html_content" name="html_content" style="display:none;"></textarea>
+  <!-- a página sera enviada diretamente ao backend para views-->
+  <div class="fixed-top" style="background-color: #a7a4a4;">  
+    
+    <div class="collapse" id="navbarToggleExternalContent">
+      <div class="bg-dark p-4">
+        <h5 class="text-white h4">Selecione o período para exportação</h5>      
+        <div class="row">
+          <div class="col-2 text-white">					  
+            <label for="campo1" class="form-label">Data inicial</label>
+            <input type="month" class="form-control" id="campo1" name="data_inicial">	    
+          </div>
+          <div class="col-2 text-white">
+            <label for="campo2" class="form-label">Data final</label>
+            <input type="month" class="form-control" id="campo2" name="data_final">				    
+          </div>  
+          <div class="col-2">
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="radio" id="PDF" value="1">
+              <label class="form-check-label text-white" for="PDF">PDF</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="radio" id="EXCEL" value="2">
+              <label class="form-check-label text-white" for="EXCEL">Excel</label>
+            </div>
+          </div>
+          <div class="col-2">
+            <button type="button" onclick="enviarTabela()" class="btn btn-success">Exportar</button>
+            <input type="hidden" name="tabela" value="{{ contexto.tabela }}">
+            <!-- <input type="hidden" name="lista" value="{{ contexto.lista }}"> -->
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <nav class="navbar navbar-dark bg-dark">
+      <button class="navbar-toggler ml-0" type="button" data-toggle="collapse" data-target="#navbarToggleExternalContent" aria-controls="navbarToggleExternalContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+        <a class="navbar-brand" href="#">SICALC</a>  
+      </button>    
+    </nav>
+  </div>
+</form>
+
+
+<br><br><br><hr/>
+
+<!-- <p>{{ first_name }} / {{ last_name }} </p> -->
+    <script src="{% static 'js/my_javascript.js' %}"></script>
+    <!-- <script> noback(); </script> -->
+
+<main>
+  {% if itens %}
+  <div>
+    <h5>Resultado:</h5>
+    <h6>{{ itens.1 }}</h6>
+    <h6>{{ itens.2 }}</h6>
+    <h6>{{ itens.3 }}</h6>
+    <h6>{{ itens.4 }}</h6>
+    <h6>{{ lista }}</h6>
+    <h6>{{ itens.5 }}</h6>
+    <!-- {% for i in itens.5.0 %}
+      <h6>{{ i }}</h6>
+    {% endfor %}
+  -->
+    
+    <hr>
+  </div>
+{% endif %}
+
+
+  {% if contexto %}   
+
+    {% if contexto.colunas == 6 %}
+        <div> 
+        </div>
+          <div class="row"> <!-- 1a linha -->
+                <div class="col-sm-7">                
+                  <h4>{{ contexto.tabela }}</h4>              
+                </div>
+                <span id="qtde_linhas" style="color:white" >{{ contexto.tamanho |cut:"." }}</span> <!-- style="color:white" -->
+                
+                <div class="col-sm-3"> 
+                    <label for="dtatua" class="form-label">Data de atualização</label>
+                    <input type="text" class="form-control" id="dtatua" name="dtatualiza" value="{{ contexto.data_atualizacao|slice:'3:10' }}" onchange="recalcula()" maxlength="7" required> 
+                </div>
+                
+                <div class="col-sm-2"></div>  
+          </div> <!-- 1a linha -->  
+          <br>
+
+          <div class="container-fluid">
+            <table class="table table-striped table-bordered table-sm">
+              <thead>
+            <tr>
+              <th scope="col"><center>DATA</center></th>
+              <th scope="col"><center>INDEXADOR</center></th>         
+              <th scope="col"><center>VARIAÇÃO MENSAL (%)</center></th>
+              <th scope="col"><center>NÚMERO ÍNDICE VARIAÇÃO MENSAL</center></th>                   
+              <th scope="col"><center>FATOR VIGENTE NA ÉPOCA</center></th>
+              <th scope="col"><center>ÍNDICE DE CORREÇÃO MONETÁRIA</center></th>                
+            </tr>
+          </thead>     
+          <tbody>
+              <tr>
+                {% for i in contexto.lista %} <!--PORTRAIT -->
+                    <td align="center" id="a{{ i.0 |cut:'.' }}">{{ i.1 |slice:"3:10" }}</td>  <!-- {{ i.1 | date:"SHORT_DATE_FORMAT"}}</td> -->              
+                    <td align="center" id="b{{ i.0 |cut:'.' }}">{{ i.2 }}</td>
+                    <td align="right"  id="c{{ i.0 |cut:'.' }}">{{ i.3 |floatformat:6 |cut:'.' }}</td>
+                    <td align="right"  id="d{{ i.0 |cut:'.' }}">{{ i.4 |floatformat:10 |cut:'.' }}</td>
+                    <td align="right"  id="e{{ i.0 |cut:'.' }}">{{ i.5 |floatformat:6 |cut:'.' }}</td>
+                    <td align="right"  id="f{{ i.0 |cut:'.' }}">{{ i.6 |floatformat:10 |cut:'.' }}</td>
+              </tr>
+              {% endfor %}
+          </tbody>       
+        </table>    
+    
+    {% elif contexto.colunas == 4 %}
+        <div> 
+        </div>
+          <div class="row"> <!-- 1a linha -->
+                <div class="col-sm-7">                
+                  <h4>{{ contexto.tabela }}</h4>              
+                </div>
+                <span id="qtde_linhas" style="color:white" >{{ contexto.tamanho |cut:"." }}</span> <!-- style="color:white" -->
+                
+                <!--
+                <div class="col-sm-3"> 
+                    <label for="dtatua" class="form-label">Data de atualização</label>
+                    <input type="text" class="form-control" id="dtatua" name="dtatualiza" value="{{ contexto.data_atualizacao|slice:'3:10' }}" onchange="recalcula()" maxlength="7" required> 
+                </div>
+                -->
+                
+                <div class="col-sm-2"></div>  
+          </div> <!-- 1a linha -->  
+          <br>
+
+          <div class="container-fluid">
+            <table class="table table-striped table-bordered table-sm">
+              <thead>
+            <tr>
+              <th scope="col"><center>DATA</center></th>
+              <th scope="col"><center>SELIC (%)</center></th>         
+              <th scope="col"><center>SELIC ACUMULADA (%)</center></th>
+              <th scope="col"><center>SELIC ACUMULADA MENSAL (%)</center></th>                                                 
+            </tr>
+          </thead>     
+          <tbody>
+              <tr>
+                {% for i in contexto.lista %} <!--PORTRAIT -->
+                    <td align="center" id="a{{ i.0 |cut:'.' }}">{{ i.1 |slice:"3:10" }}</td>  <!-- {{ i.1 | date:"SHORT_DATE_FORMAT"}}</td> -->              
+                    <td align="right"  id="b{{ i.0 |cut:'.' }}">{{ i.2 |floatformat:2 |cut:'.' }}</td>
+                    <td align="right"  id="c{{ i.0 |cut:'.' }}">{{ i.3 |floatformat:2 |cut:'.' }}</td>
+                    <td align="right"  id="d{{ i.0 |cut:'.' }}">{{ i.4 |floatformat:2 |cut:'.' }}</td>                    
+              </tr>
+              {% endfor %}
+          </tbody>       
+        </table>    
+    
+    {% elif contexto.colunas == 3 %}
+        <div> 
+        </div>
+          <div class="row"> <!-- 1a linha -->
+                <div class="col-sm-7">                
+                  <h4>{{ contexto.tabela }}</h4>              
+                </div>
+                <span id="qtde_linhas" style="color:white" >{{ contexto.tamanho |cut:"." }}</span> <!-- style="color:white" -->
+                <!--
+                <div class="col-sm-3"> 
+                    <label for="dtatua" class="form-label">Data de atualização</label>
+                    <input type="text" class="form-control" id="dtatua" name="dtatualiza" value="{{ contexto.data_atualizacao|slice:'3:10' }}" onchange="recalcula()" maxlength="7" required> 
+                </div>
+                -->
+                <div class="col-sm-2"></div>  
+          </div> <!-- 1a linha -->  
+          <br>
+
+          <div class="container-fluid">
+            <table class="table table-striped table-bordered table-sm">
+              <thead>
+            <tr>
+              <th scope="col"><center>DATA</center></th>
+              
+              {% if contexto.codigo == 300 %}
+              <th scope="col"><center>META SELIC COPOM (%)</center></th>         
+              <th scope="col"><center>TAXA MENSAL (%)</center></th>              
+              {% else %}
+              <th scope="col"><center>JUROS MENSAL (%)</center></th>         
+              <th scope="col"><center>JUROS ACUMULADOS (%)</center></th>
+              {% endif %}                
+            
+            
+            </tr>
+          </thead>     
+          <tbody>
+              <tr>
+                {% for i in contexto.lista %} <!--PORTRAIT -->
+                    <td align="center" id="a{{ i.0 |cut:'.' }}">{{ i.1 |slice:"3:10" }}</td>  <!-- {{ i.1 | date:"SHORT_DATE_FORMAT"}}</td> -->                                  
+                    <td align="right"  id="c{{ i.0 |cut:'.' }}">{{ i.2 |floatformat:2 |cut:'.' }}</td>
+                    <td align="right"  id="d{{ i.0 |cut:'.' }}">{{ i.3 |floatformat:2 |cut:'.' }}</td>
+                    
+              </tr>
+              {% endfor %}
+          </tbody>       
+        </table>    
+
+    {% elif  contexto.colunas == 2 %}
+        <div> 
+        </div>
+          <div class="row"> <!-- 1a linha -->
+                <div class="col-sm-7">                
+                  <h4>{{ contexto.tabela }}</h4>              
+                </div>
+                <span id="qtde_linhas" style="color:white" >{{ contexto.tamanho |cut:"." }}</span> <!-- style="color:white" -->
+                
+                <!--
+                <div class="col-sm-3"> 
+                    <label for="dtatua" class="form-label">Data de atualização</label>
+                    <input type="text" class="form-control" id="dtatua" name="dtatualiza" value="{{ contexto.data_atualizacao|slice:'3:10' }}" maxlength="7" required> 
+                </div>
+                -->
+
+                <div class="col-sm-2"></div>  
+          </div> <!-- 1a linha -->  
+          
+          <br>
+
+          <div class="container-fluid">
+            <table class="table table-striped table-bordered table-sm">
+              <thead>
+            <tr>
+              <th scope="col"><center>DATA</center></th>
+              <th scope="col"><center>VALOR (%)</center></th>
+            </tr>
+          </thead>     
+          <tbody>
+              <tr>
+                {% for i in contexto.lista %} <!--PORTRAIT -->
+                    <td align="center" id="a{{ i.0 |cut:'.' }}">{{ i.1 |slice:"3:10" }}</td>  <!-- {{ i.1 | date:"SHORT_DATE_FORMAT"}}</td> -->                                  
+                    <td align="right"  id="c{{ i.0 |cut:'.' }}">{{ i.2 |floatformat:2 |cut:'.' }}</td>                  
+              </tr>
+                {% endfor %}
+          </tbody>       
+        </table>          
+
+    {% elif contexto.coluna == '20' %}
+        <!--  -->
+        <div class="row"> <!-- 1a linha -->
+          <div class="col-sm-7">                
+            <h4>{{ contexto.tabela }}</h4>              
+          </div>        
+        </div> <!-- 1a linha -->  
+        <br>
+      
+        <div class="container-fluid">
+          <table class="table table-striped table-bordered table-sm">
+            <thead>
+              <tr>
+                <th scope="col"><center>VIGÊNCIA</center></th>
+                <th scope="col"><center>MOEDA</center></th>         
+                <th scope="col"><center>ALTERAÇÃO</center></th>
+                <th scope="col"><center>LEGISLAÇÃO</center></th>
+              </tr>
+            </thead>     
+            <tbody>
+              <tr>
+                {% for i in contexto.lista %} <!--PORTRAIT -->
+                    <td align="center"  id="a{{ i.0 }}">{{ i.2 }}</td>               
+                    <td align="center"  id="b{{ i.0 }}">{{ i.3 }}</td>
+                    <td align="justify" id="c{{ i.0 }}">{{ i.4 }}</td>
+                    <td align="justify" id="d{{ i.0 }}">{{ i.5 }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>       
+          </table>
+        </div>
+
+    {% else %}
+
+        <div><h1>TABELA EM CONSTRUÇÃO, AGUARDE!</h1></div>
+
+
+    {% endif %}
+
+
+    {% if contexto.descricao %}
+      <div class="row">
+        Observação: {{ contexto.descricao | linebreaksbr }}
+      </div>
+    {% endif %}
+
+
+
+  {% endif %}
+
+</main>
+
+{% endblock %}

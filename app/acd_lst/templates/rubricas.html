@@ -1,0 +1,102 @@
+{% extends 'cabecalho1.html' %}
+
+{% block title %}SICALC | Consultas | Rubricas {% endblock %}
+
+
+{% block content %}
+{% load widget_tweaks %}
+
+<h4>
+	<a style="color:black;" data-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
+    Rubricas
+  	</a>
+</h4>
+<hr/>
+
+<p>
+
+<div class="collapse" id="collapseExample">
+  <div class="card card-body">
+    Para a consultar todas as rubricas dos exequentes, basta deixar os campos de rubricas em branco.
+  </div>
+</div>
+
+<!-- <p>{{ first_name }} / {{ last_name }} </p>    target="_blank"    -->
+{% if messages %}
+  {% for message in messages %}
+	<div class="alert alert-success my-2 my-sm-0 col-6" role="alert">
+       	{{ message }}
+	  	 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+ 			<span aria-hidden="true">&times;</span>
+		 </button>
+	</div>
+		{% endfor %}
+{% endif %}
+
+<main>
+	
+  <div class="container-fluid">
+    
+	<form  enctype="multipart/form-data" action="{% url 'rubricas-lista' %}"  target="_blank" class="form my-2 my-lg-0" method="POST">
+
+		{% csrf_token %} 
+		
+		{% for error in field.errors %}			
+		  <section class="alert alert-danger alert-dismissible fade show my-2 my-sm-0 col-6" role="alert">
+		   	{{ field.errors }}
+		    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+  				<span aria-hidden="true">&times;</span>
+			</button>
+		  </section>
+		{% endfor %}	
+		
+		<div class="form-group form-group-sm col-12">
+			
+			<div class="row">
+				<div class="col-2"><h6>{{form.anoinicial.label }}</h6>{{ form.anoinicial | add_class:'form-control form-control-sm'}}</div>
+				<div class="col-2"><h6>{{form.anofinal.label }}</h6>{{ form.anofinal | add_class:'form-control form-control-sm'}}</div>
+				<div class="col-2"><h6>{{form.orgao.label }}</h6>{{ form.orgao | add_class:'form-control form-control-sm'}}</div>
+			</div>
+			<br>
+			<div class="row">
+				<div class="col-12"><h6>Código das rubricas</h6></div>
+			</div>
+
+			<div class="row">
+			  <div class="col-sm-2">{{form.rubrica1 | add_class:'form-control form-control-sm'}}</div>
+			  <div class="col-sm-2">{{form.rubrica2 | add_class:'form-control form-control-sm'}}</div>
+			  <div class="col-sm-2">{{form.rubrica3 | add_class:'form-control form-control-sm'}}</div>
+			  <div class="col-sm-2">{{form.rubrica4 | add_class:'form-control form-control-sm'}}</div>
+			  <div class="col-sm-2">{{form.rubrica5 | add_class:'form-control form-control-sm'}}</div>
+			</div>
+			
+			<div class="row"<><p></p></div>
+			
+			<div class="row"> 
+			  <div class="col-sm-2">{{form.rubrica6 | add_class:'form-control form-control-sm'}}</div>
+			  <div class="col-sm-2">{{form.rubrica7 | add_class:'form-control form-control-sm'}}</div>
+			  <div class="col-sm-2">{{form.rubrica8 | add_class:'form-control form-control-sm'}}</div>
+			  <div class="col-sm-2">{{form.rubrica9 | add_class:'form-control form-control-sm'}}</div>
+			  <div class="col-sm-2">{{form.rubrica10| add_class:'form-control form-control-sm'}}</div>
+			</div>
+			<br/>
+			<div class="row">
+				<div class="col-12"><h6>{{form.cpfs.label }}</h6></div>
+			</div>			
+			<div class="row">
+				<div class="col-sm-6">{{form.cpfs | add_class:'form-control form-control-sm'}}</div>
+		    </div>
+		</div> 
+
+		<div class="input-group col-3">		
+			<button class="btn btn-primary my-2 my-sm-0" type="submit">Enviar</button>
+		</div>
+
+	</form>
+
+  </div>
+
+  
+</main>
+{% endblock %}
+

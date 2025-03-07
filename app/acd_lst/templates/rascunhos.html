@@ -1,0 +1,194 @@
+<!--
+    <br>
+       
+     
+  </div>
+  
+    <hr>
+     
+  <div>
+     {{ extracao }} 
+  </div>
+ 
+  <p>CPF: {{ cpf }}</p>
+  <p>Ano inicial: {{ anoinicial }}</p>
+  <p>Ano final: {{ anofinal }}</p>
+  <p> It is {% now "jS F Y H:i" %}</p>
+  <p>It is the {% now "jS \o\f F" %}</p>
+  <p>It is {% now "SHORT_DATETIME_FORMAT" %}</p>
+  <p>{{ value|date:"D d M Y" }}</p>
+  
+  {% for f in fichas.values %}
+
+  {% for r in f.cadastro.registros %}
+
+  <div class="container-fluid">
+    FICHA FINANCEIRA REFERENTE A {{ r.ano | stringformat:"s" }}<br>
+    SERVIDOR:  {{   f.cadastro.iu | stringformat:"s"  }} - {{   f.cadastro.nome   }}<br>
+    ORGÃO:  {{   r.orgao | stringformat:"s"  }} - {{ r.nomeorgao }} <br>   
+    CARGO/LOTAÇÃO: {{ r.codgcargo }}-{{ r.codcargo }} / {{ r.classe }}-{{ r.padrao }} / {{ r.nomecargo }}<br><br>    
+
+  </div>
+
+ 
+  <div class="container-fluid">
+    <table class="table table-striped table-bordered table-sm">
+      <thead>
+        <tr>
+          <th scope="col"><center>Código</center></th>
+          <th scope="col"><center>Rubrica</center></th>         
+          <th scope="col"><center>R/D</center></th>
+          <th scope="col"><center>Seq</center></th>                   
+          <th scope="col"><center>JAN</center></th>
+          <th scope="col"><center>FEV</center></th>
+          <th scope="col"><center>MAR</center></th>
+          <th scope="col"><center>ABR</center></th>                   
+          <th scope="col"><center>MAI</center></th>
+          <th scope="col"><center>JUN</center></th>
+          <th scope="col"><center>JUL</center></th>                   
+          <th scope="col"><center>AGO</center></th>
+          <th scope="col"><center>SET</center></th>
+          <th scope="col"><center>OUT</center></th>
+          <th scope="col"><center>NOV</center></th>
+          <th scope="col"><center>DEZ</center></th>      
+        </tr>
+      </thead>
+     
+      <tbody>
+          <tr>
+            {% for l in f.lancamentos %}
+              {% if l.0 == r.ano and l.1 == r.orgao %}
+                
+
+            <td align="right">{{ l.2 | stringformat:"s"| rjust:"10" }}</td>              
+            <td align="left">{{ l.3 }}</td>
+            <td align="right">{% if l.4 == 1 %}R{% else %}D{% endif %}</td>
+            <td align="right">{{ l.5 }}</td>
+            <td align="right">{{ l.6.0 |  floatformat:2 | intcomma}}</td>
+            <td align="right">{{ l.6.1 | floatformat:2 | intcomma }}</td>
+            <td align="right">{{ l.6.2 | floatformat:2 | intcomma }}</td>
+            <td align="right">{{ l.6.3 | floatformat:2 | intcomma }}</td>
+            <td align="right">{{ l.6.4 | floatformat:2 | intcomma}}</td>
+            <td align="right">{{ l.6.5 | floatformat:2 | intcomma}}</td>
+            <td align="right">{{ l.6.6 | floatformat:2 | intcomma}}</td>
+            <td align="right">{{ l.6.7 | floatformat:2 | intcomma}}</td>
+            <td align="right">{{ l.6.8 | floatformat:2 | intcomma}}</td>
+            <td align="right">{{ l.6.9 | floatformat:2 | intcomma}}</td>
+            <td align="right">{{ l.6.10 | floatformat:2 | intcomma}}</td>
+            <td align="right">{{ l.6.11 | floatformat:2 | intcomma}}</td>
+              {% endif %}
+            
+              
+          </tr>
+           {% endfor %}
+          
+           
+      </tbody>
+       
+    </table>
+    <br>
+      
+  </div>
+ {% endfor %}
+{% endfor %}  
+</main>  
+{% endblock %}
+-->
+
+
+
+
+
+      <!--
+      <div> TESTE DE EXTRAÇÃO DE RUBRICAS</div>
+      {% for i in dados %}
+      {{ i }}<br>
+      {% endfor %}
+      <hr>{{ periodo }} <hr>
+      
+      <hr>      
+      
+        {% for item in dados %}
+          {% for ingresso in item.datas.2.ingressos %}
+          <li>Código da Rubrica: {{ ingresso.codrubrica }}, Valor: {{ ingresso.R }}</li>
+          {% endfor %}
+        {% endfor %}
+      
+      -->  
+      
+
+
+      
+<!--
+        {% for item in dados %}
+        <p>(( 1 )) [ código do orgão ]:  {{ item.codorgao }}</p>
+        
+           {% for datas in item.datas %}
+           <p>----(( 2 )) [ datas ]: {{ datas.datapagto}} -  {{ datas.ingressos }}</p>
+              
+              {% for ingresso in datas.ingressos %}
+              <p>--------(( 3 )) [codrubrica: {{ ingresso.codrubrica }}, R: {{ ingresso.R }}, D: {{ ingresso.D }}</p>
+              
+              {% endfor %}
+
+           {% endfor %}
+
+        {% endfor %}           
+-->
+       
+
+
+document.addEventListener("DOMContentLoaded", function() {
+  document.getElementById("linha6").value = 'Ré: ' + document.getElementById("re").value;        
+});
+
+function submitForm() {
+  // Obter o formulário
+  const form = document.getElementById('formCalculo317');
+
+  // Validar os campos
+  if (!validateForm(form)) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
+      return;
+  }
+
+  // Enviar o formulário
+  form.submit();
+}
+
+function validateForm(form) {
+  // Verificar se todos os campos obrigatórios estão preenchidos
+  const requiredFields = form.querySelectorAll('[required]');
+  for (const field of requiredFields) {
+      if (!field.value.trim()) {
+          field.classList.add('is-invalid'); // Adiciona classe de erro do Bootstrap
+          return false;
+      } else {
+          field.classList.remove('is-invalid'); // Remove classe de erro se estiver preenchido
+      }
+  }
+
+  // Verificar campos específicos, se necessário
+  const numProcesso = form.querySelector('#numprocesso');
+  if (numProcesso && !/^\d+$/.test(numProcesso.value)) {
+      alert('O número do processo deve conter apenas números.');
+      numProcesso.classList.add('is-invalid');
+      return false;
+  }
+
+  const anoInicial = form.querySelector('#anoinipagto');
+  const anoFinal = form.querySelector('#anofimpagto');
+  if (anoInicial && anoFinal) {
+      const anoIniValue = parseInt(anoInicial.value);
+      const anoFimValue = parseInt(anoFinal.value);
+      if (anoIniValue > anoFimValue) {
+          alert('O ano inicial não pode ser maior que o ano final.');
+          anoInicial.classList.add('is-invalid');
+          anoFinal.classList.add('is-invalid');
+          return false;
+      }
+  }
+
+  // Se todas as validações passarem
+  return true;
+}

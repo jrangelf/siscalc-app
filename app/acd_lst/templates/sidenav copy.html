@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}SICALC | Cálculos | Gratificações{% endblock %}
+
+
+{% block content %}
+<main>
+ <div>
+    		<h3>ÁREA DE TESTES</h3>
+	<div>
+
+		<hr>
+
+	<div>
+		{{ y }}
+	</div>
+
+	<hr>
+	<h4>DOWNLOAD</h4>
+	<hr>
+	<a href="/file.txt" download="file.txt">Download</a>
+	
+	<hr>
+	<h4>UPLOAD</h4>
+	<hr>
+	
+	<div>
+		<form name="form" method="POST" enctype="multipart/form-data">
+			{% csrf_token %}
+		
+			<input type="file" name="file">
+			<button type="submit" class="btn btn-success">Classify</button>
+		</form>
+	</div>
+	<hr>
+	<div>
+		<form method="post" action="recebe_upload.php" enctype="multipart/form-data">
+			<label>Arquivo:</label>
+			<input type="file" name="arquivo" />
+			<input type="submit" value="Enviar" />
+		</form>
+	</div>	
+			
+			
+	
+	
+	
+	
+ </div>  
+</main>
+
+
+{% endblock %}
+

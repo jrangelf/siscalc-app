@@ -1,0 +1,40 @@
+{% extends 'cabecalho317.html' %}
+
+{% block title %}SISCALC | 3,17%{% endblock %}
+
+{% block content %}
+
+<script>
+    function toggleSELIC() {
+        var aplicarSELIC = document.getElementById("aplicarSELIC");
+        var selicJuros = document.getElementById("selecJurosRow");
+        // Exibe ou oculta o checkbox "SELIC incide sobre os juros"
+        selicJuros.style.display = aplicarSELIC.checked ? "block" : "none";
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        document.getElementById("linha6").value = 'Ré: ' + document.getElementById("re").value;        
+    });
+</script>
+
+<main>   
+        <div class="container">
+            {% include 'globals/dados_do_processo.html' %}
+        </div>
+        <div class="container">
+            {% include 'globals/dados_do_calculo.html' %}
+        </div>
+        <div class="container">
+            {% include 'globals/inclusao_cpf.html' %}
+        </div>
+        <div class="container">
+            {% include 'globals/base_317.html' %}
+        </div>
+        <div class="container"> 					
+            {% include 'globals/dados_do_cabecalho.html' %}            					
+        </div>        
+    </form>  
+ 
+</main>
+{% endblock %}
+

@@ -1,0 +1,45 @@
+services:
+
+  app:
+    container_name: app
+    build:
+      context: ./app
+      dockerfile: ./dockerfile.app    
+    command: python3 manage.py runserver 0.0.0.0:8000
+    #command: uwsgi --socket app:8000 --module acd_app.wsgi --master --enable-threads                        
+    ports:
+      - '8000:8000'
+    networks:
+      - siscalc     
+    #depends_on:
+    #  - serpro      
+    restart: on-failure
+    volumes:
+      - ./app:/app
+      - static_data:/app/static     
+    env_file:
+      - ./env/app.env
+    
+  
+  #nginx:
+  #  container_name: nginx
+  #  build:
+  #    context: ./nginx
+  #    dockerfile: ./dockerfile.nginx
+  #  volumes:
+  #    - static_data:/vol/static
+  #    - ./nginx/log:/var/log/nginx      
+  #  ports:
+  #    - '80:80' 
+  #  depends_on:
+  #    - app
+  #  networks:
+  #    - siscalc
+
+networks:
+  siscalc:
+    external: true
+
+volumes:
+  static_data:    
+

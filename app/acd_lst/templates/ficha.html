@@ -1,0 +1,44 @@
+{% extends 'cabecalho1.html' %}
+
+{% block title %}SICALC | Ferramentas | Extrator{% endblock %}
+
+
+{% block content %}
+<h4>Ficha financeira</h4>
+<!-- <p>{{ first_name }} / {{ last_name }} </p> -->
+<hr/>
+<main>
+
+  <div class="container-fluid">
+
+    <h1></h1>
+    <br>
+    <form enctype="multipart/form-data" action="{% url 'ficha-lista' %}"  target="_blank" method="POST">
+      {% csrf_token %}  
+	  <div class="form-row">
+	    <div class="col-2">
+	      <input type="text" class="form-control" placeholder="CPF" name="cpf" maxlength="14">
+	    </div>
+	    
+	    <div class="col-2">
+	      <input type="text" class="form-control" placeholder="Ano inicial" name="anoinicial"maxlength="4">
+	    </div>
+	    
+	    <div class="col-2">
+	      <input type="text" class="form-control" placeholder="Ano final" name="anofinal" maxlength="4">
+	    </div>
+	    
+	    <div class="col">
+	       <button type="submit" class="btn btn-primary mb-2">Extrair</button>  	
+	    </div>
+	  </div>
+      
+  </form>
+	 
+	</form>
+    
+  </div>
+
+</main>
+
+{% endblock %}

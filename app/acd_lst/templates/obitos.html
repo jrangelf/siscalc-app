@@ -1,0 +1,76 @@
+{% extends 'cabecalho1.html' %}
+
+{% block title %}SICALC | Ferramentas | Óbitos{% endblock %}
+
+
+{% block content %}
+{% load widget_tweaks %}
+
+<h4>
+	<a style="color:black;" data-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
+    Verificação de óbitos
+  	</a>
+</h4>
+<hr/>
+
+<div class="collapse" id="collapseExample">
+  <div class="card card-body">
+    Os CPFs podem ser inseridos nos campos disponíveis tanto de forma individual (CPF), como por meio de uma lista (Lista de CPFs) que deve ser colada na área especificada. Além disso, o CPFs podem ser inseridos em qualquer formato, inclusive sem os zeros à esquerda.<br><br>Formatos válidos de entrada:<br>48809604 (o aplicativo irá substituir por 00048809604);<br>123.456.789-22 (o aplicativo irá substituir por 12345678922);<br>576077346-21 (o aplicativo irá substituir por 57607734621);<br><br>Também é verificada a validade de cada número inserido por meio dos dígitos verificadores.
+  </div>
+</div>
+
+<!-- <p>{{ first_name }} / {{ last_name }} </p>    target="_blank"    -->
+{% if messages %}
+  {% for message in messages %}
+	<div class="alert alert-success my-2 my-sm-0 col-6" role="alert">
+       	{{ message }}
+	  	 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+ 			<span aria-hidden="true">&times;</span>
+		 </button>
+	</div>
+		{% endfor %}
+{% endif %}
+
+<main>
+	
+  <div class="container-fluid">
+    
+	<form  enctype="multipart/form-data" action="{% url 'obitos-lista' %}"  target="_blank" class="form my-2 my-lg-0" method="POST">
+
+		{% csrf_token %} 
+		
+		{% for field in form %}
+
+		<div class="form-group form-group-sm col-6">
+
+			<label for="{{ field.id_for_label }}">{{ field.label }}</label>
+				
+				{{ field | add_class:'form-control form-control-sm' }}
+		
+		</div>			
+			    {% for error in field.errors %}
+			
+			   <section class="alert alert-danger alert-dismissible fade show my-2 my-sm-0 col-6" role="alert">
+			       	{{ field.errors }}
+			  	 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+  					<span aria-hidden="true">&times;</span>
+				 </button>
+		       </section>
+
+		     {% endfor %}
+
+		{% endfor %}
+						
+		<hr/>
+		
+		<div class="input-group col-3">		
+			<button class="btn btn-primary my-2 my-sm-0" type="submit">Enviar</button>
+		</div>
+	</form>
+
+  </div>
+
+  
+</main>
+{% endblock %}
+

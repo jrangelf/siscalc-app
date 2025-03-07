@@ -1,0 +1,82 @@
+	<div class="row">
+      <h4>Dados do Processo</h4>       
+    </div>		
+    <hr>
+    <div class="row">
+
+        <div class="col-sm-4">					  
+            <label for="numprocesso" class="form-label">Número do processo</label>
+            <input type="text" class="form-control" id="numprocesso" name="numprocesso" oninput="document.getElementById('linha4').value='Processo: '+this.value">	    
+        </div>
+        
+        <div class="col-sm-6">					  
+            <label for="nomeexequente" class="form-label">Nome do exequente</label>
+            <input type="text" class="form-control" id="nomeexequente" name="nomeexequente"  oninput="document.getElementById('linha5').value='Exequente: '+this.value">	    
+        </div>
+
+        <div class="col-sm-2">
+            <label for="re" class="form-label">Ré</label>
+            <input type="text" class="form-control" id="re" value="União" name="re"   oninput="document.getElementById('linha6').value='Ré: '+this.value">				    
+        </div>
+
+    </div>
+    <hr>
+    
+    <div class="row">
+                                  
+        <div class="col-sm-2">
+            <label for="dtajuizamento" class="form-label">Data ajuizamento</label>
+            <input type="date" class="form-control" id="dtajuizamento" name="dtajuizamento" oninput="
+                document.getElementById('termoinicial').value=this.value;
+                document.getElementById('linha7').value='Data de ajuizamento: '+this.value;">	    
+        </div>
+
+        <div class="col-sm-2">
+            <label for="dtcitacao" class="form-label">Data de citação</label>
+            <input type="date" class="form-control" id="dtcitacao" name="dtcitacao" oninput="document.getElementById('linha8').value='Data de citação: '+this.value" required>	    
+        </div>
+
+        <div class="col-sm-2">
+            <label for="dtatualizacao" class="form-label">Data de atualização</label>
+            <input type="date" class="form-control" id="dtatualizacao" name="dtatualizacao"  oninput="document.getElementById('linha9').value='Data de atualização: '+this.value" required>
+        </div>
+
+        <div class="col-sm-2">					
+        </div>
+        
+        <div class="col-sm-2">
+            <label for="termoinicial" class="form-label">Termo inicial</label>
+            <input type="date" class="form-control" id="termoinicial" name="termoinicial" required>	    
+        </div>
+
+        <div class="col-sm-2">
+            <label for="termofinal" class="form-label">Termo final</label>
+            <input type="date" class="form-control" id="termofinal" name="termofinal" required>
+        </div>						
+
+    </div>
+    <hr>				
+
+    <div class="row">
+        <!-- Campo de Pagamento Administrativo -->
+        <div class="col-auto" style="margin-right: 36px;">
+            <label for="pagamento" class="form-label" style="display: block; text-align: left;">Pagto Administrativo (%)</label>
+            <input type="number" class="form-control" name="pagamento"  id="pagamento" min="0" max="100" step="5" value="100" style="width: 100px; display: inline-block;" required>
+        </div>
+    
+        <!-- Campo de Ano Inicial -->
+        <div class="col-auto" style="margin-right: 18px;">
+            <label for="anoinipagto" class="form-label" style="display: block; text-align: left;">Ano inicial</label>
+            <input type="number" class="form-control" name="anoinipagto"  id="anoinipagto" name="ano_ini_pagto" min="1990" max="2050" style="width: 100px; display: inline-block;" required>
+        </div>
+    
+        <!-- Campo de Ano Final -->
+        <div class="col-auto">
+            <label for="anofimpagto" class="form-label" style="display: block; text-align: left;">Ano final</label>
+            <input type="number" class="form-control" name="anofimpagto"  id="anofimpagto" name="ano_fim_pagto" min="1990" max="2050" style="width: 100px; display: inline-block;" required>
+        </div>
+    </div>
+    <hr>
+        
+                         
+</div>

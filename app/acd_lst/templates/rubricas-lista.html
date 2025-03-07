@@ -1,0 +1,117 @@
+{% extends 'cabecalho2.html' %}
+{% load humanize %}
+
+
+{% block title %}SICALC | Extrator de rubricas{% endblock %}
+
+{% block content %}
+    {% csrf_token %} 
+    
+  <nav class="navbar fixed-top navbar-expand-lg scrolling-navbar navbar-dark" style="background-color: #696969;">
+
+    <a class="navbar-brand" href="#">SICALC - Consulta rubricas</a>
+      
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item dropdown">        
+          <a class="nav-link dropdown-toggle" id="menuexporta" data-toggle="dropdown" aria-haspopup="true"
+              aria-expanded="false">Exportar
+          </a>        
+          <div class="dropdown-menu dropdown-primary" aria-labelledby="menuexporta">
+            <a class="dropdown-item" href="#">Arquivo PDF</a>
+            <a class="dropdown-item" href="#">Arquivo Excel</a>
+            <a class="dropdown-item" href="#">Arquivo Texto</a>
+          </div>
+        </li> 
+      </ul>     
+    </div>
+  </nav>
+  <br/><br/><br/>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-success" role="alert">
+          {{ message }}
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+      </div>    
+    {% endfor %}
+  {% endif %}
+
+  <div class="container">
+        <!-- {{ form.media }} -->
+  </div>
+      
+  {% for dados in livro %}
+  <main>    
+    <br>
+    
+    {%for item in dados %}
+
+        <div class="container-fluid">
+          EXTRAÇÃO REFERENTE AO PERÍODO DE {{ ano.0 | stringformat:"s" }} A {{ ano.1 | stringformat:"s" }}<br>     
+       
+          SERVIDOR: {{ item.nome }} - {{ item.cpf|slice:"0:3" }}.{{ item.cpf|slice:"3:6" }}.{{ item.cpf|slice:"6:9" }}-{{ item.cpf|slice:"9:11" }}<br>        
+        </div>
+
+        <div class="container-fluid">
+          <table class="table table-hover table-bordered"> <!-- "table-striped table-bordered table-sm"
+          "table table-hover"
+          "table table-bordered" "table table-striped"
+          
+          --> 
+           <div>ORGÃO: {{ item.codorgao | stringformat:"s"}} - {{ item.nomeorgao }}</div>
+               <br><br>
+              <thead>
+                 <tr>
+                  <th scope="col"><center></center></th>
+                  {% for rubrica in rubricas %}
+                  <th scope="col" colspan="2"><center>{{ rubrica.descricao }}</center></th>         
+                  {% endfor %}                        
+                  </tr>
+                  <tr>
+                    <th scope="col"><center></center></th>
+                    {% for rubrica in rubricas %}
+                    <th scope="col" colspan="2"><center><h6>{{ rubrica.codigo | stringformat:"s" }}</h6></center></th>         
+                    {% endfor %}                          
+                  </tr>
+                  <tr>
+                    <th scope="col"><center>MÊS/ANO</center></th>
+                    {% for rubrica in rubricas %} 
+                    <th scope="col"><center>{{ "Rendimento" }}</center></th>
+                    <th scope="col"><center>{{ " Desconto " }}</center></th>
+                    {% endfor %}               
+                    
+                  </tr>
+                </thead>
+                {% for datas in item.datas %}                                      
+                  
+                <tbody>              
+                  <tr>
+                        <!-- MÊS/ANO -->                  
+                        {% with datas.datapagto|slugify as data_string %}              
+                        <th scope="row""><center>{{ data_string|slice:"4:" }}/{{ data_string|slice:"0:4" }}</center></td> 
+                        {% endwith %}
+
+                    
+                      {% for ingresso in datas.ingressos %}                   
+                            <td align="center"><center>{{ ingresso.R |  floatformat:2 | intcomma }}</center></td>
+                            <td align="center"><center style="color: red;">{{ ingresso.D |  floatformat:2 | intcomma }}</center></td>
+                      {% endfor %}      
+                  </tr>
+                {% endfor %}
+                
+                </tbody>
+          </table>
+          <br>
+        </div>
+
+      
+    {% endfor %} <!-- for item in dados -->
+
+  {% endfor %} <!-- for dados in livro -->  
+  </main>
+  {% endblock %}
+
+  

@@ -1,0 +1,55 @@
+{% extends 'cabecalho1.html' %}
+
+{% block title %}SICALC | Tabelas {% endblock %}
+
+{% block content %}
+
+{% load static %}
+
+{% if tipo == 'juros' %}
+    <h4>Juros</h4>
+{% elif tipo == 'pnep' %}
+    <h4>Índices PNEP</h4>
+{% elif tipo == 'bcb' %}
+    <h4>Indexadores do Banco Central</h4>
+{% else %}
+    <h4>Tabelas diversas</h4>
+{% endif %}
+
+<hr/>
+
+<!-- <p>{{ first_name }} / {{ last_name }} </p> -->
+    <script src="{% static 'js/my_javascript.js' %}"></script>
+    <!-- <script> noback(); </script> -->
+
+<main>
+  <form enctype="multipart/form-data" action="{% url 'tabelas-lista' %}" target="_blank" method="POST">
+      {% csrf_token %} 
+
+    <div class="container">
+      <div class="row">
+      <div class="col-sm-6">
+          <select class="form-control" id="tabelas" name="tabelas" required>
+            <option></option>
+              {% if tabelas %}
+                {% for k in tabelas %}
+                  <option value="{{ k }}">{{ k }}</option>
+                {% endfor %}
+              {% endif %} 
+          </select> 
+      </div> 
+    </div> 
+    
+    <div class="row">
+      <div class="col-sm-6">
+        <button type="submit" class="btn btn-primary mt-3">Obter Informações</button>
+      </div>
+    </div> 
+
+    <br>
+    </div>
+  </form>
+</main>
+
+{% endblock %}
+

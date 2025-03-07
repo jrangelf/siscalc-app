@@ -1,0 +1,72 @@
+  <br>
+  <div class="row">
+    <h4>Dados do Cálculo</h4>       
+  </div>		
+  <hr>
+    <div class="row">
+        
+        <div class="col-sm-6"> 
+            <label for="tabpnep" class="form-label"><h6>Índice de atualização</h6></label>
+            <select class="form-control" id="selecaoPnep" name="tabpnep" required>
+                <option></option>
+                {% if pnep %}
+                    {% for j in pnep %}
+                        <option value="{{ j }}">{{ j }}</option>
+                    {% endfor %}
+                {% endif %}							
+            </select>	
+        </div>
+
+        <div class="col-sm-6"> 
+            <label for="tabjuros" class="form-label"><h6>Juros</h6></label>
+            <select class="form-control" id="selecaoJuros" name="tabjuros" required>
+                <option></option>
+                {% if juros %}
+                    {% for k in juros %}
+                        <option value="{{ k }}">{{ k }}</option>
+                    {% endfor %}
+                {% endif %}							
+            </select>	
+        </div>
+
+        </div>
+        <hr>
+
+        <div class="row">
+            <div class="col-6">
+                <div class="form-check">
+                    <label class="form-check-label" for="verificarObito"></label>
+                    <input type="hidden" name="verificarObito" value="off">
+                    <input class="form-check-input" type="checkbox"  name="verificarObito" id="verificarObito" checked>
+                        Verificação de óbito
+                    </label>					     
+                </div>					    
+            </div>
+        </div>
+    <br\>
+    <div class="row">
+        <div class="col-6">
+            <div class="form-check">
+                <label class="form-check-label" for="aplicarSELIC"></label>
+                <input type="hidden" name="aplicarSELIC" value="off">
+                <input class="form-check-input" type="checkbox"  name="aplicarSELIC" id="aplicarSELIC" checked>
+                
+                   Aplicar SELIC
+                </label>					     
+            </div>					    
+        </div>
+    </div>
+    <br\>
+    <div class="row">
+        <div class="col-6">                                                        
+            <div class="form-check">
+                <label class="form-check-label" for="selicJuros"></label>
+                <input type="hidden" name="selicJuros" value="off">
+                <input class="form-check-input" type="checkbox" name="selicJuros" id="selicJuros">                         
+                SELIC não incide sobre os juros
+                </label>					     
+            </div>					    
+        </div>
+    </div>   
+    <hr>    
+</div>
