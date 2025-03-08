@@ -10,32 +10,25 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 import os
-
+from decouple import config
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'dz-we%5r9_zaw85asyi^%_^qw$qonw&b%k3&&sjy%2vgw#r2$l'
-#DB_ENGINE = os.environ.get('TOKEN')
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-#DB_ENGINE = os.environ.get('TOKEN')
+DEBUG = config('DEBUG')
 
-ALLOWED_HOSTS = ['*']
-#DB_ENGINE = os.environ.get('TOKEN')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=lambda v: v.split(","))
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
-
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 50000
 
-#SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Armazena sessões no banco de dados (padrão)
 
 # Application definition
 
@@ -97,26 +90,6 @@ DATABASES = {
     }
 }
 
-"""
-DB_ENGINE = os.environ.get('TOKEN')
-DB_NAME= os.environ.get('DB_NAME')
-DB_USER= os.environ.get('DB_USER')
-DB_PASSWORD= os.environ.get('DB_PASSWORD')
-DB_HOST= os.environ.get('DB_HOST')
-DB_PORT= os.environ.get('DB_PORT')
-"""
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': '_app',
-#         'USER': 'gres',
-#         'PASSWORD': 'a',
-#         'HOST': 'p',
-#         'PORT': '2',
-#     }
-# }
-
 
 
 # Password validation
@@ -174,14 +147,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")  # Diretório para coleta de
 # Diretório para arquivos de mídia
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-"""
-STATIC_URL = '/static/'
-MEDIA_URL = '/media/'
-
-STATIC_ROOT = '/vol/static'
-MEDIA_ROOT = '/vol/media'
-"""
-
 TEMPUS_DOMINUS_LOCALIZE = True
 
 
@@ -190,8 +155,4 @@ FILE_UPLOAD_HANDLERS = [
     'django.core.files.uploadhandler.TemporaryFileUploadHandler',
 ]
 
-TOKEN='AGU1234!'
-#TOKEN = os.environ.get('D_TOKEN')
-#MEDIA_URL = '/media/'
-#MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
+TOKEN = config('TOKEN')
