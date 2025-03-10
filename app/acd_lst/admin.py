@@ -7,6 +7,12 @@ class TbBase317Admin(admin.ModelAdmin):
 	list_display = ('codigorubrica', 'nomerubrica', 'tipo')
 	search_fields = ('codigorubrica', 'nomerubrica')
 	ordering = ('codigorubrica',)
+
+@admin.register(TbBase2886)
+class TbBase2886Admin(admin.ModelAdmin):
+	list_display = ('codigorubrica', 'nomerubrica', 'tipo')
+	search_fields = ('codigorubrica', 'nomerubrica')
+	ordering = ('codigorubrica',)
 	
 
 @admin.register(AbateTeto)

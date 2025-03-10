@@ -7,6 +7,7 @@ class Document(models.Model):
     document = models.FileField(upload_to='documents/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
+
 class TbBase317(models.Model):
 	codigorubrica = models.IntegerField('Código')
 	nomerubrica = models.CharField('Rubrica', max_length=200)
@@ -16,6 +17,20 @@ class TbBase317(models.Model):
 		db_table = 'tb_base317'
 		verbose_name = 'Base Cálculo 3.17'
 		verbose_name_plural = 'Base Cálculo 3.17'
+
+	def __str__ (self):
+		return f"{self.codigorubrica} - {self.nomerubrica} - {self.tipo}"
+	
+	
+class TbBase2886(models.Model):
+	codigorubrica = models.IntegerField('Código')
+	nomerubrica = models.CharField('Rubrica', max_length=200)
+	tipo = models.CharField('Tipo', max_length=1)
+
+	class Meta:
+		db_table = 'tb_base2886'
+		verbose_name = 'Base Cálculo 28.86'
+		verbose_name_plural = 'Base Cálculo 28.86'
 
 	def __str__ (self):
 		return f"{self.codigorubrica} - {self.nomerubrica} - {self.tipo}"
