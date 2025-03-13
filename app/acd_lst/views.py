@@ -2,6 +2,8 @@ from re import S
 from .forms import ObitoForm, RubricasForm, ListForm, UploadFileForm, List
 from datetime import datetime
 
+from io import TextIOWrapper
+
 from django.shortcuts import render, redirect 
 from django.contrib import messages
 from django.http import HttpResponseRedirect
@@ -202,11 +204,104 @@ def resultado317(request):
 	
 	return render(request, 'resultado317.html', {'resultado': resultado})
 
+
+#----------------------------------------------------------------------------------------------------------------------
+
 def calculo2886(request):
-	return render(request,'calculo2886.html',{})
+
+	if request.method == "POST":
+			
+		# cria um dicionário com todos os itens dos formulários
+		resultado = [{key: value} for key, value in request.POST.items()]
+		del resultado[0]
+		
+		arquivo_simplificado = TextIOWrapper(request.FILES['arquivo_simplificado'].file, encoding='latin-1')
+		arquivo_completo = TextIOWrapper(request.FILES['arquivo_completo'].file, encoding='latin-1')
+
+		# cria um dicionário para os campos e uma lista de dicionários para as rubricas retirando as de tipo 'N'
+		campos, rubricas_base_2886 = Utils.extrair_campos(resultado)
+		#info(f'CAMPOS:\n{campos}') 	
+
+		# filtrar apenas as rubricas de rendimentos da extração
+		linhas_rendimento_arquivo_completo = Utils.filtrar_rendimentos(arquivo_completo)
+		#info(f'arquivo completo rendimentos:\n{linhas_rendimento_arquivo_completo}')
+
+		# obter os códigos das rubricas da extração de rendimentos filtrada
+		lista_rubricas_extracao = Utils.obter_rubricas_extracao(linhas_rendimento_arquivo_completo)		
+		#info(f"rubricas_extracao:\n{lista_rubricas_extracao}")	
+
+		# obter uma lista das rubricas de extração que estão contidas nas rubricas da base 2886
+		lista_rubricas_calculo = Utils.extrair_fitas(rubricas_base_2886, lista_rubricas_extracao)
+		info(f"lista_rubricas_calculo: {lista_rubricas_calculo}")		
+		
+		# criar uma lista de dicionários separando os exequentes com suas respectivas rubricas extraídas
+		resposta = Utils.processar_arquivo_completo_e_simplificado(arquivo_simplificado, linhas_rendimento_arquivo_completo)
+		
+		#resultado_calculo_2886 = Matriz.Calculo2886.calcular2886(parametros)
+		
+		#info(f'resposta:\n{resposta}')
+
+
+		
+		# Armazenar os dados na sessão
+		request.session['campos'] = campos
+		#request.session['varios_cpf_ativo'] = varios_cpf_ativo
+		#request.session['varios_cpf_pensionista'] = varios_cpf_pensionista
+		request.session['rubricas'] = rubricas_base_2886		
+		
+		return redirect('resultado2886')
+	
+	
+	else:		
+		lista_tabelas = ApiIndice.get_lista_completa_das_tabelas()		
+		teste = [[item[0], item[1], item[2]] for item in lista_tabelas if 200 <= item[0] < 400]
+		lista_tabelas_indices = [item[1] for item in lista_tabelas if 200 <= item[0] < 300]
+		lista_tabelas_juros = [item[1] for item in lista_tabelas if 300 < item[0] < 312]
+
+		#info(f'pnep:\n{lista_tabelas_indices}\njuros:\n{lista_tabelas_juros}')
+		
+		#queryset = TbBase317.objects.filter(tipo='S').values('codigorubrica', 'nomerubrica', 'tipo')
+		queryset = TbBase2886.objects.values('codigorubrica', 'nomerubrica', 'tipo')
+		#info(f'queryset:\n{queryset}')
+		return render(request,'calculo2886.html',{
+			'pnep':lista_tabelas_indices, 
+			'juros': lista_tabelas_juros,
+			'items':queryset,			
+			'teste':teste})
+
 
 def resultado2886(request):
-	return render(request,'calculo2886.html',{})
+# Recuperar os dados da sessão
+	resultado = request.session.get('resultado', 'Nenhum resultado disponível.')
+	campos = request.session.get('campos', 'Nenhuma rubrica disponivel')
+	lista_ativo = []
+	lista_pensionista = []
+
+	# for item in resultado:
+	# 	for key, value in item.items():
+	# 		info(f'key:{key}')
+	# 		info(f'value:{value}')
+	
+	#info(f'resultado:\n{resultado}')
+			
+	# Limpar espaços extras e remover linhas vazias
+	#lista_ativo = [cpf.strip() for cpf in lista_ativo if cpf.strip()]
+	#lista_pensionista = [cpf.strip() for cpf in lista_pensionista if cpf.strip()]
+
+	# Exibir os resultados
+	#info("Ativos/Aposentados:", lista_ativo)
+	#info("Pensionistas:", lista_pensionista)
+
+
+	#cpf_ativos = request.session.get('varios_cpf_ativo', '')
+	#cpf_pensionistas = request.session.get('varios_cpf_pensionista')
+	#info(f'ativos:\n{cpf_ativos}')
+	#info(f'pensionistas:\n{cpf_pensionistas}')
+	
+	return render(request, 'resultado2886.html', {'resultado': resultado, 'campos': campos})
+
+#---------------------------------------------------------------------------------------------------------------
+
 
 
 

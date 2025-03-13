@@ -1,7 +1,6 @@
 from src.configura_debug import *
-
-
-
+import csv
+from django.http import JsonResponse
 
 class Utils:
 
@@ -10,12 +9,11 @@ class Utils:
     def encontrar_valores_por_nome(cls, tabelas: list, nome_iam: str, nome_juros: str) -> tuple:
         """
         Encontra o nome das tabelas de IAM e de Juros da lista de tabelas no banco de dados.
-
-        entrada:
+        Args.
             tabelas (list): Uma lista de listas, onde cada sublista contém [[..., valor, nome],..[..., valor, nome]]
             nome_iam (str): O nome da tabela de IAM a ser procurada.
             nome_juros (str): O nome da tabela de juros a ser procurada.
-        saída:
+        Retorno:
             uma tupla contendo os nomes das tabelas de IAM e de juros.
         erro:
             TypeError: Se a entrada não for do tipo esperado.
@@ -45,379 +43,286 @@ class Utils:
 
         return valor_iam, valor_juros
 
-
-
-
-
-
-
-
-"""
-
-'''
-
-def converter_tipo1_to_tipo2(data)->dict:
-    '''retira do arquivo json a tag __values__'''
-    if isinstance(data, list):
-        return [converter_tipo1_to_tipo2(item) for item in data]
-    elif isinstance(data, dict):
-        if "__values__" in data:
-            return {key: converter_tipo1_to_tipo2(value) for key, value in data["__values__"].items()}
-        else:
-            return {key: converter_tipo1_to_tipo2(value) for key, value in data.items()}
-    else:
-        return data
-
-
-def montar_ficha_financeira(ficha):
-
-    info("->(formata ficha financeira-begin)<----------")
-
-    quantidade_fichas = len(ficha) if ficha else 0
-    registros, cadastros = [], []
-    if quantidade_fichas > 0:			
-        for i in range(quantidade_fichas):				
-            servidor = ficha[i]['nome']
-            cpf = ficha[i]['CPF']
-            ano = ficha[i]['ano']
-            iu = ficha[i]['identificacaoUnica']
-            quantidade_vinculos = len(ficha[i]['vinculos']['vinculo'])            
-            # iterar por cada vínvulo
-            nomecargo = ''
-            for j in range(quantidade_vinculos):
-                codigo_orgao = ficha[i]['vinculos']['vinculo'][j]['codOrgao']
-                matricula = ficha[i]['vinculos']['vinculo'][j]['matricula']
-                codigo_grupo_cargo = ficha[i]['vinculos']['vinculo'][j]['codGrupoCargo']
-                codigo_cargo = ficha[i]['vinculos']['vinculo'][j]['codCargo']
-                classe = ficha[i]['vinculos']['vinculo'][j]['classe']
-                padrao = ficha[i]['vinculos']['vinculo'][j]['padrao']
-                sigla_regime = ficha[i]['vinculos']['vinculo'][j]['siglaRegimeJuridico']				
-                quantidade_itens=len(ficha[i]['vinculos']['vinculo'][j]['fichaFinanceira']['itemFichaFinanceira'])
-                
-                try:
-                    data = Serpro.obter_nome_orgao(codigo_orgao)
-                    nomeorgao = data['nome']
-                except:
-                    nomeorgao = 'Não informado'
-
-                if codigo_cargo != 0 and codigo_grupo_cargo != 0:
-                    try:
-                        data = Serpro.pesquisar_nome_cargo(codigo_cargo,codigo_grupo_cargo)
-                        nomecargo = data['nome']                        
-                    except:
-                        nomecargo = 'Não informado'
-                        
-                cad = {'ano':ano,'orgao':codigo_orgao,'matricula':matricula,'codgcargo':codigo_grupo_cargo,'codcargo':codigo_cargo,'classe':classe,'padrao':padrao,'sigla':sigla_regime,'nomeorgao':nomeorgao,'nomecargo':nomecargo}
-                info(f"cad: {cad}")
-                cadastros.append(cad)
-                nomerubrica = ''
-                for k in range(quantidade_itens):					
-                    rubrica = ficha[i]['vinculos']['vinculo'][j]['fichaFinanceira']['itemFichaFinanceira'][k]['codigo']
-                    rendimento = ficha[i]['vinculos']['vinculo'][j]['fichaFinanceira']['itemFichaFinanceira'][k]['rendimento']
-                    sequencia = ficha[i]['vinculos']['vinculo'][j]['fichaFinanceira']['itemFichaFinanceira'][k]['sequencia']
-                    datapgto = ficha[i]['vinculos']['vinculo'][j]['fichaFinanceira']['itemFichaFinanceira'][k]['dataPagamento']
-                    valor = ficha[i]['vinculos']['vinculo'][j]['fichaFinanceira']['itemFichaFinanceira'][k]['valor']				
-                    try:
-                        lista = [rubrica]
-                        dados = ManipulaExtracao.obter_descricao_dos_codigos_rubricas(lista)                        
-                        nomerubrica = dados[0]['descricao']                        
-                    except:
-                        nomerubrica = 'N/I'
-										
-                    reg = [ano,codigo_orgao, rubrica, nomerubrica, rendimento,sequencia,datapgto,float(valor)]
-                    registros.append(reg)
-
-        dados_cadastro = {'iu':iu,'nome':servidor,'registros':cadastros}
-    else:
-        dados_cadastro = {'iu':'','nome':'','registros':''}
-		
-    registros_meses_consolidados =[]
-
-    # registros_meses_consolidados = Processamento.consolidar_registros(registros)    
-    registros_meses_consolidados = consolidar_registros(registros)
-    dicionario = {'cadastro':dados_cadastro,'lancamentos':registros_meses_consolidados}    
-    info("->(formata ficha financeira-end)<--")    
-    return dicionario
-
-
-def agrupar_rubricas(extracao, rubricas, orgaos, anoi, anof, nome, cpf, descricao_orgaos):
-
-    #info (f"\nrubricas no agrupamento: {rubricas}\ndescricao orgaos: {descricao_orgaos}")   
-
-    periodo = gerar_periodo(anoi, anof)
-
-    #periodo = [(item * 100) + mes for item in range(anoi, anof+1) for mes in range(1, 13)]
-    
-    agrupadas = []
-    orgao_dict = {} 
-
-    for orgao in orgaos:
-        descricao = 'N/I'
-        for item in descricao_orgaos:
-                
-            if int(orgao) == int(item['codigo']):
-                descricao = item['nome']
-        
-        orgao_int = int(orgao)
-        orgao_dict['cpf'] = cpf
-        orgao_dict['nome'] = nome
-        orgao_dict['codorgao'] = orgao_int
-        orgao_dict['nomeorgao'] = descricao 
-        
-        data_dict = {}
-        datas = []
-
-        for anomes in periodo:
-            anomes_int = int(str(anomes)) # itera a lista do período ['200801','200802'...'202012']
-            ingressos = []            
-
-            for codrubrica in rubricas: # itera a lista das rubricas ['1','18'...'87543']
-                codrubrica_int = int(codrubrica)
-
-                # gera o dicionário item como resultado das buscas em receitas e e despesas
-
-                receitas = [item for item in extracao if item['codorgao'] == orgao_int and 
-                                                      item['datapagto'] == anomes_int and
-                                                      item['codrubrica'] == codrubrica_int and
-                                                      item['rendimento'] == 1]
-                
-                descontos = [item for item in extracao if item['codorgao'] == orgao_int and 
-                                                      item['datapagto'] == anomes_int and
-                                                      item['codrubrica'] == codrubrica_int and
-                                                      item['rendimento'] == 2]
-                
-                #término da primeira rubrica
-                rubricas_dict ={}
-                if receitas:                    
-                    if len(receitas) == 1: # não há "duplicadas" no mesmo mês                                        
-                        rubricas_dict['codrubrica'] = codrubrica_int                    
-                        rubricas_dict['R'] = receitas[0]['valor']
-                        receitas = []
-                        receitas.append(rubricas_dict)
-                    elif len(receitas) > 1:
-                        soma = calcular_soma_valores(receitas)
-                        receitas = []                    
-                        rubricas_dict['codrubrica'] = codrubrica_int
-                        rubricas_dict['R'] = soma
-                        receitas.append(rubricas_dict)                    
-                    #info(f"data: {anomes_int} depois: {receitas}")
-
-                if descontos:
-                    if len(descontos) == 1:
-                        rubricas_dict['codrubrica'] = codrubrica_int                    
-                        rubricas_dict['D'] = descontos[0]['valor']
-                        descontos = []
-                        descontos.append(rubricas_dict)
-                    elif len(descontos) > 1:                    
-                        soma = calcular_soma_valores(descontos)
-                        descontos = []                    
-                        rubricas_dict['codrubrica'] = codrubrica_int                    
-                        rubricas_dict['D'] = soma                    
-                        descontos.append(rubricas_dict)
-                    #info(f"data: {anomes_int} depois: {descontos}")
-
-                if rubricas_dict:
-                    ingressos.append(rubricas_dict)
+    def extrair_campos(lista_campos: list) -> tuple:
+        """ recebe a lista dos campos e extrai um dicionário em que as chaves são os campos dos formulários e
+            uma lista de dicionários de rubricas sem o tipo 'N'
             
-            # témino da lista das rubricas
-            #info("-------------------------------------------------")
-                        
-            data_dict['datapagto']=anomes_int
-            data_dict['ingressos']=ingressos
-
-            datas.append(data_dict)
-            data_dict = {}
-
-        #info(f"datas: {datas}")
-        
-        # término da lista do período
-        orgao_dict['datas'] = datas
-        datas = []
-
-        agrupadas.append(orgao_dict)
-        orgao_dict ={}
-    
-    # témino da lista de órgãos
-    #info(f"agrupadas: {agrupadas}")        
-        
-    return agrupadas
-
-
-
-
-
-
-
-
-#*************************************************************************************
-
-def calcular_soma_valores(itens):
-    soma = sum(float(item['valor']) for item in itens)
-    return soma
-
-
-def gerar_lista_mesano(anoi, anof):        
-    mesano = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-    lista_mesano = []
-    for ano in range(anoi, anof+1): 
-        for mes in mesano:
-            lista_mesano.append(f'{mes}/{ano}')
-    return lista_mesano    
-
-
-def gerar_periodo(anoi, anof):
-    anof = int(anof)
-    anoi = int(anoi)
-    return [(item * 100) + mes for item in range(anoi, anof+1) for mes in range(1, 13)]
-
-
-def converter_formato_mes_ano(valor):
-        ano = str(valor)[:4]
-        mes = str(valor)[4:]
-        return '{}/{}'.format(mes, ano)
-
-'''
-"""
-
-
-
-"""
-	deve retornar um dicionário da seguinte forma:
-			
-	fichas={	IU1 : {'cadastro:{ dados_cadastro }, 'registros':{ lancamentos}},
-				IU2 : {'cadastro:{ dados_cadastro }, 'registros':{ lancamentos}},
-	 			...
-	 			IUn : {'cadastro:{ dados_cadastro }, 'registros':{ lancamentos}
-	 		}
-	dados_cadastro={ {'iu':1234, 'nome':"joaquim", 
-					   registros[{ 'ano':1992,
-					   				'orgao':123,
-					   				'matricula':123,
-					   				'codgcargo':12,
-					   				'codcargo':22, 
-					   				'classe':'C', 
-					   				'padrao': 'VI', 
-					   				sigla: 'EST'}, {...},{...}
-					   			]
-	lancamentos=[
-					[1992, 25000, 1, 1, 0, [0, 0, 0, 0, 0, 938364.73, 938364.73, 938364.73, 1126037.67, 2506028.98, 2506028.98, 2506028.98]], 
-					[1992, 25000, 13, 1, 0, [0, 0, 0, 0, 0, 9383.64, 9383.64, 9383.64, 11260.37, 25060.28, 25060.28, 50120.57]], 
-					[1992, 25000, 53, 1, 1, [0, 0, 0, 0, 0, 93836.47, 9383.64, 9383.64, 11260.37, 25060.28, 25060.28, 25060.28]], 
-					[1992, 25000, 92, 1, 0, [0, 0, 0, 0, 0, 4044.39, 4044.36, 4044.36, 4853.52, 4853.22, 4853.22, 4853.22]], 
-					[1992, 25000, 224, 1, 1, [0, 0, 0, 0, 0, 637866.04, 637866.04, 637866.04, 637866.04, 0, 0, 0]], 
-					[1992, 25000, 591, 1, 0, [0, 0, 0, 0, 0, 0, 0, 0, 337811.3, 751808.69, 2004823.18, 2004823.18]],
-				]	
-
-"""
-
-"""
-exequentes:
-[
-{'cpf':'23456732987', 'agrupadas':[]},
-{'cpf':'87867398732', 'agrupadas':[]
-]
-
-agrupadas = [
-{'codorgao': 17000, 'datas': [{'datapagto': 200801, 'ingressos': [
-                                                                    {'codrubrica': 1, 'R': 2673.24},
-                                                                    {'codrubrica': 13, 'R': 400.98},
-                                                                    {'codrubrica': 136, 'R': 161.99},
-                                                                    {'codrubrica': 31908, 'D': 2030.16}]},
-				               {'datapagto': 200802, 'ingressos': [
-                                                                    {'codrubrica': 1, 'R': 2673.24},
-                                                                    {'codrubrica': 13, 'R': 400.98},
-                                                                    {'codrubrica': 136, 'R': 161.99},
-                                                                    {'codrubrica': 31908, 'D': 2130.16}]},
-   				               {'datapagto': 200803, 'ingressos': [
-                                                                    {'codrubrica': 1, 'R': 2673.24},
-                                                                    {'codrubrica': 13, 'R': 400.98},
-                                                                    {'codrubrica': 136, 'R': 161.99},
-                                                                    {'codrubrica': 31908, 'D': 2130.16}]},
-   				               {'datapagto': 200804, 'ingressos': [
-                                                                    {'codrubrica': 1, 'R': 2673.24},
-                                                                    {'codrubrica': 13, 'R': 400.98},
-                                                                    {'codrubrica': 136, 'R': 161.99},
-                                                                    {'codrubrica': 31908, 'D': 2130.16}]},
-   				               {'datapagto': 200805, 'ingressos': [
-                                                                    {'codrubrica': 1, 'R': 2673.24},
-                                                                    {'codrubrica': 13, 'R': 400.98},
-                                                                    {'codrubrica': 136, 'R': 161.99},
-                                                                    {'codrubrica': 31908, 'D': 2130.16}]},
-                               {'datapagto': 200806, 'ingressos': []},
-                               {'datapagto': 200807, 'ingressos': []},
-                                                 .
-                                                 .
-                                                 .
-                               {'datapagto': 200910, 'ingressos': []},
-                               {'datapagto': 200911, 'ingressos': []},
-                               {'datapagto': 200912, 'ingressos': []}]}]                                                         
-
-                                          
-
-exequentes = [{exequente_dict}, {exequente_dict},....,{exequente_dict}]
-exequente_dict = {'cpf': '23413463401', 'orgaos': orgaos_lista}
-
-agrupadas = [{orgao_dict},...{orgao_dict}]
-orgao_dict = {'codorgao':22000, 'datas': datas}
-
-datas = [{data_dict}, {data_dict},...{data_dict}]
-data_dict = {'datapagto':200801, 'ingressos': ingressos}
-
-ingressos = [{rubricas_dict},{rubricas_dict}...{rubricas_dict}]
-rubricas_dict = {'codrubrica':13, 'R': 234.23, 'D':125.22}
-
-"""
-
-
-
-
-"""
-    Mover a declaração de abater para dentro do loop interno: 
-    Atualmente, você declara o dicionário abater fora dos loops 
-    e o reutiliza em cada iteração. Isso faz com que todos os 
-    elementos em abatimentos sejam referências ao mesmo dicionário. 
-    Para corrigir isso, você deve declarar abater dentro do loop 
-    interno para criar um novo dicionário em cada iteração. 
-    Aqui está um exemplo:
-
-    def gerar_lista_descontos(lista):
-        abatimentos = []
-        for i in lista:
-            for j in i['ficha']:
-                if j['rendimento'] == 2 and len(j['rubricas']) != 0:
-                    abater = {
-                        'orgao': i['orgao'],
-                        'data': j['data'],
-                        'descontos': j['rubricas']
-                    }
-                    abatimentos.append(abater)
-        return abatimentos
-
-    Utilizar list comprehension: Você também pode usar 
-    list comprehension para simplificar o código e evitar 
-    o uso explícito de loops. Aqui está um exemplo:
-
-    def gerar_lista_descontos(lista):
-        return [
-            {
-                'orgao': i['orgao'],
-                'data': j['data'],
-                'descontos': j['rubricas']
+            valores =
+            {   'numprocesso': '20-2324-89/2025',
+                'nomeexequente': 'JOHN JONES JAMESSON',
+                're': 'União',
+                'dtajuizamento': '1995-03-10',
+                'dtcitacao': '1997-05-01',
+                'dtatualizacao': '1993-01-01',
+                'termoinicial': '1998-06-30',
+                'termofinal': '2002-02-28',
+                'tabpnep': 'Tabela c.m. cond. geral IPCA-E',
+                'tabjuros': 'Juros 0,5% até junho de 2009',
+                'verificarObito': 'on',
+                'aplicarSELIC': 'on',
+                'selicJuros': 'off',
+                'linha1': 'ADVOCACIA-GERAL DA UNIÃO',
+                'linha2': 'Procuradoria Nacional de Execuções e Precatórios/PGU/AGU',
+                'linha3': 'DEPARTAMENTO DE CÁLCULOS E PERÍCIAS',
+                'linha4': 'Processo: ',
+                'linha5': 'Exequente: ',
+                'linha6': 'Ré: União',
+                'linha7': 'Data do ajuizamento: ',
+                'linha8': 'Data da citação: ',
+                'linha9': 'Data de atualização: '
             }
-            for i in lista
-            for j in i['ficha']
-            if j['rendimento'] == 2 and len(j['rubricas']) != 0
-        ]
+            rubricas = [
+                [ {'codigo': '9', 'descricao': 'VANT.PESSOAL NOM IDENTIFIC-CLT', 'tipo': 'C'},
+                  {'codigo': '11', 'descricao': 'SUSPENSAO CONV.MULTA L.8112/90', 'tipo': 'N'},
+                  {'codigo': '12', 'descricao': 'ADIC TEMPO SERVICO RM JURIDICO', 'tipo': 'C'},
+                  {'codigo': '13', 'descricao': 'ADIC.TEMPO SERVICO LEI 8112/90', 'tipo': 'C'},
+                  {'codigo': '15', 'descricao': 'REPRESENTACAO MENSAL', 'tipo': 'F'},
+                  {'codigo': '16', 'descricao': 'HORAS SUPLEMENTARES - CLT', 'tipo': 'C'},
+                  {'codigo': '18', 'descricao': 'ADIC.TEMPO SERV.L.8112/90-APOS', 'tipo': 'C'},
+                ]
+            """
+        
+        def ajustar_lista(resultado: list) -> list:
+            """
+            Transforma a lista de dicionários no formato:
+                [{'codigo_X': 'X'}, {'descricao_X': 'DESCRICAO'}, {'tipo_X': 'TIPO'}, ...]
+            no formato:
+                [{'codigo': 'X', 'descricao': 'DESCRICAO', 'tipo': 'TIPO'}, ...]
+            Args:
+                lista_original (list[dict]): Lista de dicionários no formato original.
+            Returns:
+                list[dict]: Lista de dicionários no formato transformado.
+            """            
+            resultado_ajustado =[]
+            for i in range(0, len(resultado),3):
+                codigo_dict = resultado[i]
+                descricao_dict = resultado[i + 1]
+                tipo_dict = resultado[i + 2]
 
+                tipo_valor = list(tipo_dict.values())[0]
+                
+                if tipo_valor != 'N':
+                    novo_dicionario = {
+                        'codigo': list(codigo_dict.values())[0], # pegar o valor da chave 'codigo_X'
+                        'descricao': list(descricao_dict.values())[0], # pegar o valor da chave 'descricao_X'
+                        'tipo': list(tipo_dict.values())[0] # pegar o valor da chave 'tipo_X'
+                        }
+                    resultado_ajustado.append(novo_dicionario)                    
+            return resultado_ajustado               
+        
+        primeiros_13 = lista_campos[:13]
+        ultimos_9 = lista_campos [-9:]
+        valores = {}
+        for d in primeiros_13 + ultimos_9:
+            valores.update(d)
+        rubricas = ajustar_lista(lista_campos[13:-9])        
+        return valores, rubricas
+    
+
+    def filtrar_rendimentos(arquivo):
+        """
+        Filtra as linhas do arquivo completo que terminam com ";1".
+        Args:
+            arquivo (bytes): O conteúdo do arquivo codificado em bytes.
+        Returns:
+            list[str] | None: Uma lista de strings contendo as linhas filtradas
+        """
+        try:
+            linhas = arquivo.readlines()
+            linhas_filtradas = [linha.strip() for linha in linhas if linha.strip().endswith(";1")]
+            return linhas_filtradas
+
+        except Exception as e:
+            info(f"Erro ao processar o arquivo: {e}")
+            return None
+        
+    def obter_rubricas_extracao(linhas_arquivo_filtrado):
+        """
+        Extrai valores únicos dos codigos das rubricas, da coluna 4 (índice 3) de uma lista de linhas filtradas.
+        Args:
+            linhas_arquivo_filtrado (list[str]): Uma lista de strings representando as linhas filtradas.
+        Returna:
+            list[int] | None: Uma lista ordenada de inteiros contendo os códigos das rubricas
+        """
+        try:
+            valores_coluna4 = set()  
+            for linha in linhas_arquivo_filtrado:
+                linha = linha.strip()  # Remove espaços em branco e quebras de linha
+                if linha and ";" in linha:  # Ignora linhas vazias ou mal formatadas
+                    campos = linha.split(";")  # Divide a linha pelo delimitador ";"
+                    if len(campos) > 3:  # Garante que a linha tem pelo menos 4 colunas
+                        try:
+                            valor = int(campos[3])  # Converte o valor da coluna 4 para inteiro, não tem ponto no número
+                            valores_coluna4.add(valor)
+                        except ValueError:
+                            info(f"Valor inválido na coluna 4: {campos[3]}")            
+            
+            valores_ordenados = sorted(valores_coluna4)            
+            return valores_ordenados
+
+        except Exception as e:
+            print(f"Erro ao processar o arquivo: {e}")
+            return None
+        
+        
+    def extrair_fitas(rubricas, lista_extracao):
+        listaC = []
+        listaF = []
+        listaR = []
+        listaP = []
+
+        # Iterar sobre a lista de rubricas
+        for rubrica in rubricas:
+            codigo_com_ponto = rubrica['codigo']
+            codigo = codigo_com_ponto.replace('.','') 
+            codigo = int(codigo) 
+            if codigo in lista_extracao:
+                tipo = rubrica['tipo']            
+                if tipo == 'C':
+                    listaC.append(codigo)
+                elif tipo == 'F':
+                    listaF.append(codigo)
+                elif tipo == 'R':
+                    listaR.append(codigo)
+                elif tipo == 'P':
+                    listaP.append(codigo)
+        resultado = {
+            'C': listaC,
+            'F': listaF,
+            'R': listaR,
+            'P': listaP
+        }
+        return resultado
+    
+
+    def processar_arquivo_completo_e_simplificado(simplificado, linhas_filtradas) -> list:
+        """
+        Processa os arquivos simplificado e completo para gerar uma lista de dados processados.
+
+        Args:
+            simplificado: 
+                Arquivo contendo os dados dos executantes no formato simplificado. Espera-se que o arquivo tenha 
+                colunas como CODIGO, CPF, IDENTIFICACAO_UNICA, MATRICULA_BENEFICIARIO, NOME e CARGO.
+
+            linhas_filtradas (list[str]): 
+                Lista de strings representando as linhas filtradas do arquivo completo. Cada linha deve estar no 
+                formato delimitado por ';', contendo informações como CODIGO, CODIGO_ORGAO, ANO_MES, CODIGO_RUBRICA, 
+                DESC_RUBRICA, VALOR, etc, mas apenas as que terminam com valor 1.
+
+        Returns:
+            list[dict]: 
+                Uma lista de dicionários contendo os dados processados. Cada dicionário representa um exequente 
+                e suas rubricas associadas.
+
+                Estrutura de cada dicionário:
+                - 'iu' (int): Identificação única.
+                - 'cpf' (str): CPF.
+                - 'nome' (str): Nome.
+                - 'matricula' (str): Matrícula.
+                - 'beneficiario' (str): Nome beneficiário (se vazio insere '0').
+                - 'cargo' (str): Cargo.
+                - 'rubricas' (list[dict]): Lista de rubricas da extração.
+
+                Estrutura de cada rubrica:
+                - 'codorgao' (int): Código do órgão.
+                - 'codrubrica' (int): Código da rubrica.
+                - 'datapagto' (str): Data no formato AAAAMM.
+                - 'valor' (float): Valor da rubrica.
+                - 'descricao' (str): Descrição da rubrica.
+        
+                 [{'iu': 1823388, 'cpf': '121.191.181-11', 'nome': 'ANTONIO CAVALCANTE', 'matricula': '0', 'beneficiario': '0', 
+                    'cargo': '901-1', 
+                    'rubricas': []}, ...
+                  {'iu': 1837087, 'cpf': '121.121.141-14', 'nome': 'ANTONIO BOTELHO', 'matricula': '0', 'beneficiario': '0', 
+                    'cargo': '901-1', 
+                    'rubricas': [      
+                       {'codorgao': 20115, 'codrubrica': 175, 'datapagto': '199701', 'valor': 17.66, 'descricao': 'LEI 8216 APOS.'}, 
+                       {'codorgao': 20115, 'codrubrica': 1087, 'datapagto': '199701', 'valor': 278.93, 'descricao': '902329-7 VENC. DPF'}, 
+                       {'codorgao': 20115, 'codrubrica': 1087, 'datapagto': '199701', 'valor': 557.87, 'descricao': '902329-7 VENC. DPF'}, 
+                        ... 
+                       {'codorgao': 20115, 'codrubrica': 1087, 'datapagto': '199701', 'valor': 446.29, 'descricao': 'AO 902329-7 VENC. DPF'}
+                    ]}]                
+        """
+        try:
+            # Ler o arquivo simplificado (ignorando o cabeçalho)
+            leitor_simplificado = csv.reader(simplificado, delimiter=';')
+            next(leitor_simplificado)  # Ignora a primeira linha (cabeçalho)
+
+            # Processar o arquivo simplificado para obter a última linha de cada código
+            ultimas_linhas = {}
+            for linha in leitor_simplificado:
+                if len(linha) >= 6:  # Garantir que a linha tem todas as colunas esperadas
+                    codigo = linha[0]  # CODIGO está na coluna 0
+                    ultimas_linhas[codigo] = {
+                        "CODIGO": linha[0],
+                        "CPF": linha[1],
+                        "IDENTIFICACAO_UNICA": linha[2],
+                        "MATRICULA_BENEFICIARIO": linha[3],
+                        "NOME": linha[4],
+                        "CARGO": linha[5]
+                    }
+
+            #info(f"Últimas linhas do arquivo simplificado:\n{ultimas_linhas}") 
+
+            # Criar uma lista de rubricas agrupadas por código
+            rubricas_por_codigo = {}
+            for linha in linhas_filtradas:
+                campos = linha.split(";")
+                if len(campos) >= 8:
+                    try:
+                        codigo = campos[0].strip()  # CODIGO está na coluna 0
+                        codorgao = int(campos[1].strip())
+                        datapagto = campos[2].strip()
+                        codrubrica = int(campos[3].strip())
+                        descricao = campos[4].strip()
+                        valor = float(campos[6].strip().replace(',','.'))
+                    except ValueError as ve:
+                        info(f"Linha inválida ignorada: {linha}. Erro{ve}")
+                        continue                    
+                    rubrica = {
+                        "codorgao": codorgao,  
+                        "codrubrica": codrubrica,  
+                        "datapagto": datapagto,  
+                        "valor": valor,  
+                        "descricao": descricao  
+                    }
+                    if codigo not in rubricas_por_codigo:
+                        rubricas_por_codigo[codigo] = []
+                    rubricas_por_codigo[codigo].append(rubrica)            
+                 
+            #info(f"Rubricas agrupadas por código:\n{rubricas_por_codigo}")
+
+            # Criar a lista de dicionários final
+            resultado = []
+            for codigo, linha_simplificada in ultimas_linhas.items():
+                # Obter as rubricas associadas ao código atual
+                rubricas = rubricas_por_codigo.get(codigo, [])  # Retorna [] se o código não existir
+
+                # Montar o dicionário exequente
+                exequente = {
+                    "iu": int(linha_simplificada['IDENTIFICACAO_UNICA']),
+                    "cpf": linha_simplificada['CPF'],
+                    "nome": linha_simplificada['NOME'],
+                    "matricula": linha_simplificada['MATRICULA_BENEFICIARIO'],  # Considerando MATRICULA como matrícula
+                    "beneficiario": linha_simplificada.get('BENFICIARIO', '0'),  # Caso BENFICIARIO não exista
+                    "cargo": linha_simplificada['CARGO'],
+                    "rubricas": rubricas
+                }
+                # Adicionar à lista final
+                resultado.append(exequente)
+            return resultado
+
+        except KeyError as ke:
+            info(f"Erro de chave: {ke}. Verifique se as colunas estão corretas.")
+            return None
+        except Exception as e:
+            info(f"Erro ao processar os arquivos: {str(e)}")
+            return None
+        
+        
         
 
 
 
 
-    
-    
-    
-    
-    
-"""
-    
+

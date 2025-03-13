@@ -39,13 +39,6 @@
 <br/><br/><br/>
 
 <script>
-    function toggleSELIC() {
-        var aplicarSELIC = document.getElementById("aplicarSELIC");
-        var selicJuros = document.getElementById("selecJurosRow");
-        // Exibe ou oculta o checkbox "SELIC incide sobre os juros"
-        selicJuros.style.display = aplicarSELIC.checked ? "block" : "none";
-    }
-
     document.addEventListener("DOMContentLoaded", function() {
         document.getElementById("linha6").value = 'Ré: ' + document.getElementById("re").value;        
     });
@@ -53,16 +46,16 @@
 
 <main>   
         <div class="container">
-            {% include 'globals/dados_do_processo.html' %}
+            {% include 'globals/calculo_2886_dados_processo.html' %}
         </div>
         <div class="container">
             {% include 'globals/dados_do_calculo.html' %}
         </div>
         <div class="container">
-            {% include 'globals/inclusao_cpf.html' %}
+            {% include 'globals/calculo_2886_inclusao_extracao.html' %}
         </div>
         <div class="container">
-            {% include 'globals/base_317.html' %}
+            {% include 'globals/calculo_2886_base.html' %}
         </div>
         <div class="container"> 					
             {% include 'globals/dados_do_cabecalho.html' %}            					

@@ -1,0 +1,58 @@
+<br>
+<div class="row">
+  <h4>Importação de Arquivos</h4>       
+</div>		
+<hr>
+
+<!-- <div class="row">
+  <div class="col-6">
+     <h6>Simplificado</h6>
+     <input type="file" name="arquivo_simplificado" accept=".txt" class="form-control" required>
+  </div>
+  <div class="col-6">
+     <h6>Completo</h6>
+     <input type="file" name="arquivo_completo" accept=".txt" class="form-control" required>
+  </div>
+</div>
+-->
+<br>    
+<div class="row">
+    <div class="col-6">
+        <h6>Simplificado</h6>    
+        <div class="input-group mb-3">
+            <div class="custom-file">
+                <input type="file" name="arquivo_simplificado" class="custom-file-input" accept=".txt" id="inputGroupFile01">
+                <label class="custom-file-label" for="inputGroupFile01" data-browse="Procurar">Escolha o arquivo</label>
+            </div>
+        </div>
+    </div>
+    <div class="col-6">
+        <h6>Completo</h6>
+        <div class="input-group mb-3">
+            <div class="custom-file">
+                <input type="file" name="arquivo_completo" class="custom-file-input" accept=".txt" id="inputGroupFile02">
+                <label class="custom-file-label" for="inputGroupFile02" data-browse="Procurar">Escolha o arquivo</label>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Adicionando o script para atualizar o nome do arquivo -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.custom-file-input').forEach(input => {
+            input.addEventListener('change', function(event) {
+                let fileName = event.target.files[0] ? event.target.files[0].name : "Escolha o arquivo";
+                let label = event.target.nextElementSibling; 
+                label.textContent = fileName; 
+            });
+        });
+    });
+</script>
+
+
+
+
+<hr>
+   
+
+

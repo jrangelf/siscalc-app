@@ -28,6 +28,7 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=lambda v: v.split(",")
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 50000
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
 
 
 # Application definition

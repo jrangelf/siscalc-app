@@ -1,0 +1,156 @@
+{% load static %}
+
+    <br>
+    <div class="row">
+        <h4>Base de cálculo 28,86%</h4>       
+    </div>		
+    <hr>
+
+
+    <div class="row">
+        
+        <div class="col-6">
+            <br>
+            <h6>Rubricas que integram a base de cálculo</h6>
+            <br\>
+            <div class="table-container" style="max-height: 400px; overflow-y: auto; border: 1px solid #9aa7b5; position: relative;">
+                <table class="table table-bordered table-striped">
+                    <thead class="thead-light" style="position: sticky; top: 0; background-color: white; z-index: 1;">
+                    <tr>
+                        <th class="codigo" style="width: 8ch; text-align: center;">CÓDIGO</th>
+                        <th class="descricao" style="width: 40ch; text-align: center;">DESCRIÇÃO</th>
+                        <th class="tipo" style="width: 2ch; text-align: center;">TIPO</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {% if items %}
+                        {% for i in items %}
+                        <tr>
+                            <td class="codigo" name="codigo">
+                                <input type="hidden" name="codigo_{{ i.codigorubrica }}" value="{{ i.codigorubrica }}">
+                                {{ i.codigorubrica | stringformat:"05d" }}
+                            </td>
+                            <td class="descricao" name="descricao">
+                                <input type="hidden" name="descricao_{{ i.codigorubrica }}" value="{{ i.nomerubrica }}">
+                                {{ i.nomerubrica }}
+                            </td>
+                            <td class="tipo">
+                            <select class="form-select" name="tipo_{{ i.codigorubrica }}" id="{{ i.codigorubrica }}">
+                                <option  value="C" {% if i.tipo == "C" %}selected{% endif %}>C</option>
+                                <option  value="F" {% if i.tipo == "F" %}selected{% endif %}>F</option>
+                                <option  value="R" {% if i.tipo == "R" %}selected{% endif %}>R</option>
+                                <option  value="N" {% if i.tipo == "N" %}selected{% endif %}>N</option>                                
+                                <!--<option  value="P" {% if i.tipo == "P" %}selected{% endif %}>P</option>-->
+                            </select>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>           
+        </div>
+        
+        <div class="col-1"></div>
+        <div class="col-5">
+            <br/><br>
+            
+            <div class="card" style="width: 30rem;">
+                <img class="card-img-top" src="{% static 'my_images/legenda2886.png' %}" style="max-width: 20rem; height: auto;" alt="Card image cap">
+                <div class="card-body">                  
+                  <p class="card-text">As configurações dos tipos das rubricas que incidirão na base de cálculo podem ser 
+                    modificadas, conforme a necessidade do cálculo. Caso queira guardar a configuração do cálculo corrente, se 
+                    diferente da configuração padrão, basta clicar no botão de exportação. Na ocasião de fazer novo cálculo com 
+                    a configuração gravada no arquivo CSV, basta importá-lo, por meio do botão de importação.</p>
+                    <button id="exportarCsv" class="btn btn-primary" style="margin-right: 19px;" type="button">Exportar para CSV</button>
+                    <button id="importarCsv" class="btn btn-secondary" type="button">Importar de CSV</button>
+                    <input type="file" id="importarCsvInput" accept=".csv" style="display: none;">
+                </div>
+            </div>
+        </div>
+    </div>
+    <hr>
+    <script>
+        document.getElementById('exportarCsv').addEventListener('click', function () {
+            const rows = document.querySelectorAll('.table tbody tr'); // Seleciona todas as linhas da tabela
+            let csvContent = "data:text/csv;charset=utf-8,";
+
+            // Cabeçalho do CSV
+            const headers = Array.from(document.querySelectorAll('.table thead th')).map(th => th.innerText);
+            csvContent += headers.join(';') + "\n";
+
+            // Dados da tabela
+            rows.forEach(row => {
+                const cells = Array.from(row.querySelectorAll('td')).map(td => {
+                if (td.querySelector('select')) {
+                    return td.querySelector('select').value; // Pega o valor do <select>
+                    }
+                return td.innerText; // Pega o texto das células normais
+                    });
+                csvContent += cells.join(';') + "\n";
+                });
+
+            // Cria um link para download do arquivo CSV
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', 'tabela.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+        });
+
+        document.getElementById('importarCsv').addEventListener('click', function () {
+                document.getElementById('importarCsvInput').click(); // Abre o seletor de arquivos
+        });
+
+        document.getElementById('importarCsvInput').addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const text = e.target.result;
+                    const rows = text.split('\n').filter(row => row.trim() !== ''); // Divide o CSV em linhas
+
+                    // Limpa a tabela antes de adicionar novos dados
+                    const tbody = document.querySelector('.table tbody');
+                    tbody.innerHTML = '';
+
+                    // Adiciona os dados do CSV à tabela
+                    rows.forEach((row, index) => {
+                        if (index === 0) return; // Ignora o cabeçalho
+
+                        const cells = row.split(';'); // Divide a linha em células
+                        const tr = document.createElement('tr');
+
+                        cells.forEach((cell, cellIndex) => {
+                        const td = document.createElement('td');
+                            if (cellIndex === 2) { // Se for a coluna "TIPO", cria um <select>
+                                const select = document.createElement('select');
+                                select.className = 'form-select';
+                                select.innerHTML = `
+                                <option value="C" ${cell === 'C' ? 'selected' : ''}>C</option>
+                                <option value="F" ${cell === 'F' ? 'selected' : ''}>F</option>
+                                <option value="R" ${cell === 'R' ? 'selected' : ''}>R</option>
+                                <option value="N" ${cell === 'N' ? 'selected' : ''}>N</option>
+                                `;
+                                td.appendChild(select);
+                            } else {
+                                td.innerText = cell; // Células normais
+                            }
+                            tr.appendChild(td);
+                        });
+
+                        tbody.appendChild(tr);
+                    });
+                };
+                reader.readAsText(file);
+            }
+        });
+
+    </script>      
+
+</div>
+
+
