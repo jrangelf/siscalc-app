@@ -46,7 +46,7 @@
 
       <div class="col-sm-2">
         <label for="dtatualizacao" class="form-label">Data início do cálculo</label>
-        <input type="date" value="1993-01-01" class="form-control" id="dtatualizacao" name="dtatualizacao" required>
+        <input type="date" value="1993-01-01" class="form-control" id="dtiniciocalculo" name="dtiniciocalculo" required>
       </div>
 
       						
@@ -55,24 +55,43 @@
   <hr>
   <div class="row">
     <div class="col-sm-2">
-        <label for="termoinicial" class="form-label" >Termo final<span style="color: darkred;"> CARGO</span></label>
-        <input type="date" class="form-control" id="termoinicial" name="termoinicial" value="2002-02-28" required>	    
+        <label for="termofinalC" class="form-label" >Termo final<span style="color: darkred;"> CARGO</span></label>
+        <input type="date" class="form-control" id="termofinalC" name="termofinalC" value="2002-02-28" required>	    
       </div>
       
       <div class="col-sm-2">
-          <label for="termoinicial" class="form-label">Termo final<span style="color: darkred;"> FUNÇÃO</span></label>
-          <input type="date" class="form-control" id="termoinicial" name="termoinicial" value="1998-06-30" required>	    
+          <label for="termofinalF" class="form-label">Termo final<span style="color: darkred;"> FUNÇÃO</span></label>
+          <input type="date" class="form-control" id="termofinalF" name="termofinalF" value="1998-06-30" required>	    
       </div>
 
       <div class="col-sm-2">
-          <label for="termofinal" class="form-label">Termo final<span style="color: darkred;"> RAV</span></label>
-          <input type="date" class="form-control" id="termofinal" name="termofinal" value="2002-02-28" required>
+          <label for="termofinalR" class="form-label">Termo final<span style="color: darkred;"> RAV</span></label>
+          <input type="date" class="form-control" id="termofinalR" name="termofinalR" value="2002-02-28" required>
       </div>
 
   </div>
-  <hr>	
+  <hr>
+  <div class="row">
+    <!-- Campo de Pagamento Administrativo -->
+    <div class="col-auto" style="margin-right: 36px;">
+        <label for="pagamento" class="form-label" style="display: block; text-align: left;">Pagto Administrativo (%)</label>
+        <input type="number" class="form-control" name="pagamento"  id="pagamento" min="0" max="100" step="5" value="100" style="width: 100px; display: inline-block;" required>
+    </div>
+
+    <!-- Campo de Ano Inicial -->
+    <div class="col-auto" style="margin-right: 18px;">
+        <label for="anoinipagto" class="form-label" style="display: block; text-align: left;">Ano inicial</label>
+        <input type="number" class="form-control" name="anoinipagto" value="2002"  id="anoinipagto" name="ano_ini_pagto" min="1990" max="2050" style="width: 100px; display: inline-block;" required>
+    </div>
+
+    <!-- Campo de Ano Final -->
+    <div class="col-auto">
+        <label for="anofimpagto" class="form-label" style="display: block; text-align: left;">Ano final</label>
+        <input type="number" class="form-control" name="anofimpagto"  value="2009" id="anofimpagto" name="ano_fim_pagto" min="1990" max="2050" style="width: 100px; display: inline-block;" required>
+    </div>    
+  </div>
+  <hr>      
 
   
-      
-                       
+
 </div>

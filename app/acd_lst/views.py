@@ -16,7 +16,9 @@ from src.acd_tabelas import montar_tabela
 from src.api_serpro import *
 from src.api_indice import *
 from src.acd_utils import Utils
-from src.acd_main import * 
+from src.acd_main import *
+from src.acd_serpro_calculo import *
+from src.acd_calculos import * 
 
 from .models import *
 from src.acd_indices_calculo import Tabelas
@@ -218,28 +220,59 @@ def calculo2886(request):
 		arquivo_simplificado = TextIOWrapper(request.FILES['arquivo_simplificado'].file, encoding='latin-1')
 		arquivo_completo = TextIOWrapper(request.FILES['arquivo_completo'].file, encoding='latin-1')
 
-		# cria um dicionário para os campos e uma lista de dicionários para as rubricas retirando as de tipo 'N'
+		df1 = Calculos.calcular_2886_sicape(arquivo_simplificado, arquivo_completo, resultado)
+		
+		"""
+		aqui views vai chamar o método Calculos.calcular2886_sicape(resultado, arquivo_simplificado, arquivo_completo)
+		na Classe Calculos, há um método chamado calcular2886_sicape.
+
+		esse método chama, TabelaSerpro.tabela2886_sicape(resultado, arquivo_simplificado, arquivo_completo) para montar o 
+		dataframe dos valores de rendimentos do 2886. 
+		em seguida, calcular2886_sicape, vai buscar os IAM, Juros e Selic em X.
+
+		com os dataframes dos indices e os dataframes dos rendimentos, vai montar a tabela de cálculo, fazendo 
+		um merge dos dois.
+
+		deve retorna um dataframe para os calculos e um dataframe para o consolidado.
+		
+		"""
+		
+
+
+
+		# # cria um dicionário para os campos e uma lista de dicionários para as rubricas retirando as de tipo 'N'
 		campos, rubricas_base_2886 = Utils.extrair_campos(resultado)
-		#info(f'CAMPOS:\n{campos}') 	
+		# #info(f'CAMPOS:\n{campos}')
+		# #info(f'rubricas_base_2886:\n{rubricas_base_2886}')  	
 
-		# filtrar apenas as rubricas de rendimentos da extração
-		linhas_rendimento_arquivo_completo = Utils.filtrar_rendimentos(arquivo_completo)
-		#info(f'arquivo completo rendimentos:\n{linhas_rendimento_arquivo_completo}')
+		# # filtrar apenas as rubricas de rendimentos da extração do sicape
+		# linhas_rendimento_arquivo_completo = Utils.filtrar_rendimentos_sicape(arquivo_completo)
+		# #info(f'arquivo completo rendimentos:\n{linhas_rendimento_arquivo_completo}')
 
-		# obter os códigos das rubricas da extração de rendimentos filtrada
-		lista_rubricas_extracao = Utils.obter_rubricas_extracao(linhas_rendimento_arquivo_completo)		
-		#info(f"rubricas_extracao:\n{lista_rubricas_extracao}")	
+		# # obter os códigos das rubricas da extração de rendimentos filtrada
+		# lista_rubricas_extracao = Utils.obter_rubricas_extracao_sicape(linhas_rendimento_arquivo_completo)		
+		# #info(f"rubricas_extracao:\n{lista_rubricas_extracao}")	
 
-		# obter uma lista das rubricas de extração que estão contidas nas rubricas da base 2886
-		lista_rubricas_calculo = Utils.extrair_fitas(rubricas_base_2886, lista_rubricas_extracao)
-		info(f"lista_rubricas_calculo: {lista_rubricas_calculo}")		
+		# # obter uma lista das rubricas de extração que estão contidas nas rubricas da base 2886
+		# lista_rubricas_calculo = Utils.extrair_fitas_sicape(rubricas_base_2886, lista_rubricas_extracao)
+		# info(f"lista_rubricas_calculo: {lista_rubricas_calculo}")		
 		
-		# criar uma lista de dicionários separando os exequentes com suas respectivas rubricas extraídas
-		resposta = Utils.processar_arquivo_completo_e_simplificado(arquivo_simplificado, linhas_rendimento_arquivo_completo)
+		# # criar uma lista de dicionários separando os exequentes com suas respectivas rubricas extraídas
+		# resposta = Utils.processar_arquivo_completo_e_simplificado_sicape(arquivo_simplificado, 
+		# 																 linhas_rendimento_arquivo_completo, 
+		# 																 lista_rubricas_calculo)
 		
-		#resultado_calculo_2886 = Matriz.Calculo2886.calcular2886(parametros)
+		# # obter a descricao das rubricas do calculo
+		# descricao_rubricas_calculo = Utils.obter_descricao_rubricas_sicape(resposta)
+        
+		# # Exibir o resultado
+		# info(f"descricao:\n{descricao_rubricas_calculo}")
+
+		# # no metodo processar arquivo compleo e simplificado tem que passar a lista de rubricas de calculo.
+
+		# #resultado_calculo_2886 = Matriz.Calculo2886.calcular2886(parametros)
 		
-		#info(f'resposta:\n{resposta}')
+		# #info(f'resposta:\n{resposta}')
 
 
 		
@@ -261,7 +294,8 @@ def calculo2886(request):
 		#info(f'pnep:\n{lista_tabelas_indices}\njuros:\n{lista_tabelas_juros}')
 		
 		#queryset = TbBase317.objects.filter(tipo='S').values('codigorubrica', 'nomerubrica', 'tipo')
-		queryset = TbBase2886.objects.values('codigorubrica', 'nomerubrica', 'tipo')
+		#queryset = TbBase2886.objects.values('codigorubrica', 'nomerubrica', 'tipo')
+		queryset = TbBase2886.objects.values('codigorubrica', 'nomerubrica', 'tipo').order_by('codigorubrica')
 		#info(f'queryset:\n{queryset}')
 		return render(request,'calculo2886.html',{
 			'pnep':lista_tabelas_indices, 

@@ -1,9 +1,10 @@
 from src.configura_debug import *
 import csv
-from django.http import JsonResponse
+#from django.http import JsonResponse
+
+from typing import Optional, List, Dict
 
 class Utils:
-
 
     @classmethod
     def encontrar_valores_por_nome(cls, tabelas: list, nome_iam: str, nome_juros: str) -> tuple:
@@ -43,9 +44,10 @@ class Utils:
 
         return valor_iam, valor_juros
 
-    def extrair_campos(lista_campos: list) -> tuple:
+    @classmethod
+    def extrair_campos(cls, lista_campos: list) -> tuple:
         """ recebe a lista dos campos e extrai um dicionário em que as chaves são os campos dos formulários e
-            uma lista de dicionários de rubricas sem o tipo 'N'
+            uma lista de dicionários de rubricas do arquivo de extração SICAPE sem o tipo 'N'
             
             valores =
             {   'numprocesso': '20-2324-89/2025',
@@ -55,7 +57,12 @@ class Utils:
                 'dtcitacao': '1997-05-01',
                 'dtatualizacao': '1993-01-01',
                 'termoinicial': '1998-06-30',
-                'termofinal': '2002-02-28',
+                'termofinalC': '2002-02-28',
+                'termofinalF': '2002-02-28',
+                'termofinalR': '2002-02-28',
+                'pagamento': '100',
+                'anoinipgto': '2002-02-28',
+                'anofimpagto': '2002-02-28',
                 'tabpnep': 'Tabela c.m. cond. geral IPCA-E',
                 'tabjuros': 'Juros 0,5% até junho de 2009',
                 'verificarObito': 'on',
@@ -72,8 +79,7 @@ class Utils:
                 'linha9': 'Data de atualização: '
             }
             rubricas = [
-                [ {'codigo': '9', 'descricao': 'VANT.PESSOAL NOM IDENTIFIC-CLT', 'tipo': 'C'},
-                  {'codigo': '11', 'descricao': 'SUSPENSAO CONV.MULTA L.8112/90', 'tipo': 'N'},
+                [{'codigo': '9', 'descricao': 'VANT.PESSOAL NOM IDENTIFIC-CLT', 'tipo': 'C'},                  
                   {'codigo': '12', 'descricao': 'ADIC TEMPO SERVICO RM JURIDICO', 'tipo': 'C'},
                   {'codigo': '13', 'descricao': 'ADIC.TEMPO SERVICO LEI 8112/90', 'tipo': 'C'},
                   {'codigo': '15', 'descricao': 'REPRESENTACAO MENSAL', 'tipo': 'F'},
@@ -103,23 +109,24 @@ class Utils:
                 
                 if tipo_valor != 'N':
                     novo_dicionario = {
-                        'codigo': list(codigo_dict.values())[0], # pegar o valor da chave 'codigo_X'
-                        'descricao': list(descricao_dict.values())[0], # pegar o valor da chave 'descricao_X'
-                        'tipo': list(tipo_dict.values())[0] # pegar o valor da chave 'tipo_X'
+                        'codigo': list(codigo_dict.values())[0],        # pegar o valor da chave 'codigo_X'
+                        'descricao': list(descricao_dict.values())[0],  # pegar o valor da chave 'descricao_X'
+                        'tipo': list(tipo_dict.values())[0]             # pegar o valor da chave 'tipo_X'
                         }
                     resultado_ajustado.append(novo_dicionario)                    
             return resultado_ajustado               
         
-        primeiros_13 = lista_campos[:13]
+        primeiros_18 = lista_campos[:18]
         ultimos_9 = lista_campos [-9:]
         valores = {}
-        for d in primeiros_13 + ultimos_9:
+        for d in primeiros_18 + ultimos_9:
             valores.update(d)
-        rubricas = ajustar_lista(lista_campos[13:-9])        
+        rubricas = ajustar_lista(lista_campos[18:-9])        
         return valores, rubricas
     
 
-    def filtrar_rendimentos(arquivo):
+    @classmethod
+    def filtrar_rendimentos_sicape(cls, arquivo):
         """
         Filtra as linhas do arquivo completo que terminam com ";1".
         Args:
@@ -136,7 +143,8 @@ class Utils:
             info(f"Erro ao processar o arquivo: {e}")
             return None
         
-    def obter_rubricas_extracao(linhas_arquivo_filtrado):
+    @classmethod
+    def obter_rubricas_extracao_sicape(cls, linhas_arquivo_filtrado):        
         """
         Extrai valores únicos dos codigos das rubricas, da coluna 4 (índice 3) de uma lista de linhas filtradas.
         Args:
@@ -147,25 +155,24 @@ class Utils:
         try:
             valores_coluna4 = set()  
             for linha in linhas_arquivo_filtrado:
-                linha = linha.strip()  # Remove espaços em branco e quebras de linha
-                if linha and ";" in linha:  # Ignora linhas vazias ou mal formatadas
-                    campos = linha.split(";")  # Divide a linha pelo delimitador ";"
-                    if len(campos) > 3:  # Garante que a linha tem pelo menos 4 colunas
+                linha = linha.strip()               # Remove espaços em branco e quebras de linha
+                if linha and ";" in linha:          # Ignora linhas vazias ou mal formatadas
+                    campos = linha.split(";")       # Divide a linha pelo delimitador ";"
+                    if len(campos) > 3:             # Garante que a linha tem pelo menos 4 colunas
                         try:
                             valor = int(campos[3])  # Converte o valor da coluna 4 para inteiro, não tem ponto no número
                             valores_coluna4.add(valor)
                         except ValueError:
-                            info(f"Valor inválido na coluna 4: {campos[3]}")            
-            
+                            info(f"Valor inválido na coluna 4: {campos[3]}")
             valores_ordenados = sorted(valores_coluna4)            
             return valores_ordenados
-
         except Exception as e:
             print(f"Erro ao processar o arquivo: {e}")
             return None
         
         
-    def extrair_fitas(rubricas, lista_extracao):
+    @classmethod
+    def extrair_fitas_sicape(cls, rubricas, lista_extracao):
         listaC = []
         listaF = []
         listaR = []
@@ -195,7 +202,8 @@ class Utils:
         return resultado
     
 
-    def processar_arquivo_completo_e_simplificado(simplificado, linhas_filtradas) -> list:
+    @classmethod
+    def processar_arquivo_completo_e_simplificado_sicape(cls, simplificado, linhas_filtradas, rubricas_calculo) -> list:
         """
         Processa os arquivos simplificado e completo para gerar uma lista de dados processados.
 
@@ -243,6 +251,8 @@ class Utils:
                        {'codorgao': 20115, 'codrubrica': 1087, 'datapagto': '199701', 'valor': 446.29, 'descricao': 'AO 902329-7 VENC. DPF'}
                     ]}]                
         """
+        rubricas_permitidas = [cod for lista in rubricas_calculo.values() for cod in lista]
+
         try:
             # Ler o arquivo simplificado (ignorando o cabeçalho)
             leitor_simplificado = csv.reader(simplificado, delimiter=';')
@@ -278,7 +288,12 @@ class Utils:
                         valor = float(campos[6].strip().replace(',','.'))
                     except ValueError as ve:
                         info(f"Linha inválida ignorada: {linha}. Erro{ve}")
-                        continue                    
+                        continue
+
+                    # verificar se a rubrica está na lista de rubricas permitidas
+                    if codrubrica not in rubricas_permitidas:
+                        continue
+
                     rubrica = {
                         "codorgao": codorgao,  
                         "codrubrica": codrubrica,  
@@ -318,9 +333,62 @@ class Utils:
         except Exception as e:
             info(f"Erro ao processar os arquivos: {str(e)}")
             return None
-        
-        
-        
+
+
+
+    @classmethod
+    def obter_codigos_rubricas_ficha(cls, rubricas: List[Dict]) -> List[int]:
+        """
+        obtém da ficha financeira todas as rubricas utilizadas 
+		retorna uma lista ordenada de códigos únicos de rubricas em que rendimento = 1
+        """
+        rubricas_unicas = {item['codrubrica'] for item in rubricas if item.get('rendimento') == 1}
+        return sorted(rubricas_unicas)
+
+	
+    @classmethod
+    def filtrar_dados_lista_dicionarios(cls,
+                                        data: List[Dict], 
+                                        chaves_mantidas: List[str], 
+                                        chave_filtro: str, 
+                                        valor_filtro: int) -> List[Dict]:
+        """
+	    Filtra uma lista de dicionários com base em uma condição e mantém apenas as chaves desejadas.
+			data: lista de dicionários original.
+			chaves_mantidas: lista de chaves a serem mantidas nos dicionários filtrados.
+			chave_filtro: chave usada para filtrar os dicionários.
+			valor_filtro: valor que a chave de filtro deve ter para incluir o dicionário.        
+		"""
+        return [
+        	 	{key: item[key] for key in chaves_mantidas}
+         		for item in data if item.get(chave_filtro) == valor_filtro
+     	]
+    
+    @classmethod
+    def obter_descricao_rubricas_sicape(cls, resposta: list) -> dict:
+        """
+        Processa uma lista de dicionários contendo informações de rubricas e retorna um dicionário
+        com códigos de rubrica únicos e suas descrições, das utilizadas no cálculo.
+        Args:
+            resposta (List[Dict[str, Any]]): Lista de dicionários, onde cada dicionário contém informações
+                                            sobre um beneficiário e suas rubricas.
+        Returns:
+            Dict[int, str]: Dicionário onde as chaves são códigos de rubrica (int) e os valores são
+                            descrições (str), sem repetição e ordenados numericamente.
+        """        
+        descricao = {}
+
+        # Iterar sobre a lista de dicionários
+        for item in resposta:
+            for rubrica in item['rubricas']:
+                codrubrica = rubrica['codrubrica']
+                descricao_rubrica = rubrica['descricao']
+                # Adicionar ao dicionário apenas se o código ainda não estiver presente
+                if codrubrica not in descricao:
+                    descricao[codrubrica] = descricao_rubrica
+
+        # Ordenar o dicionário pelo código de rubrica (chave)
+        return dict(sorted(descricao.items()))
 
 
 

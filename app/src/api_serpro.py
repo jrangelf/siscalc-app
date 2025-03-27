@@ -1,7 +1,9 @@
+from typing import Optional, List, Dict
+
 from src.api_utils import get_api
 from src.api_get import *
 from src.configura_debug import *
-from acd_app.constantes import API_SERPRO
+from src.acd_constantes import API_SERPRO
 
 """Este módulo é responsável por buscar os dados na api-serpro por meio 
    da função get_api() """
@@ -10,6 +12,67 @@ class ApiSerpro():
 
     base_url = API_SERPRO
     
+    @classmethod
+    def remover_values_key(cls, data):
+        '''
+        Remove a chave '__values__' de uma estrutura aninhada.
+        A estrutura de dados (dicionário ou lista) que pode conter a chave '__values__'.
+        '''
+        if isinstance(data, dict):  # Se for um dicionário
+            if '__values__' in data:
+                # Substitui o dicionário pelo valor da chave '__values__'
+                return cls.remover_values_key(data['__values__'])
+            else:
+                # Processa recursivamente cada valor do dicionário
+                return {key: cls.remover_values_key(value) for key, value in data.items()}
+        elif isinstance(data, list):  # Se for uma lista
+            # Processa recursivamente cada elemento da lista
+            return [cls.remover_values_key(item) for item in data] 
+        else:
+            # Retorna o valor diretamente se não for dicionário nem lista
+            return data    
+    
+    @classmethod
+    def get_extrair_rubricas(cls, cpf: str, anoi: str, anof: str) -> dict:        
+         url = f'{cls.base_url}rubricas/{cpf}?anoinicial={anoi}&anofinal={anof}'         
+         data = get_api(url)
+         return data
+
+
+    @classmethod
+    def pesquisar_nome_iu(cls, cpf: str) -> tuple:
+        # retorna uma lista com as tabelas existentes no banco        
+        url=f'{cls.base_url}pesquisarcpf/{cpf}'
+        data = get_api(url)
+        cpf, nome, iu = data['cpf'], data['iu'], data['nome']               
+        return cpf, nome, iu    
+    
+    @classmethod
+    def extrair_ficha_financeira(cls, cpf: str, anoi: str, anof: str) -> list:
+         url = f'{cls.base_url}fichafinanceira/{cpf}?anoinicial={anoi}&anofinal={anof}'
+         data = get_api(url)
+         cleaned_data = cls.remove_values_key(data)
+         return cleaned_data 
+    
+    @classmethod
+    def extrair_rubricas_api(cls, cpf: str, anoi: str, anof: str) -> dict:        
+         url = f'{cls.base_url}rubricas/{cpf}?anoinicial={anoi}&anofinal={anof}'         
+         data = get_api(url)
+         return data
+
+        
+    @classmethod
+    def obter_data_obito_api():
+        ...
+
+    @classmethod
+    def obter_pensionistas():
+        ...
+
+    @classmethod
+    def obter_cotaparte():
+        ...  
+
     @staticmethod
     def add_get_api(sufixo: str):        
         url = f"{API_SERPRO}{sufixo}"        

@@ -9,16 +9,16 @@ class Exequente:
         ''' atribui todas informações cadastrais do exequente
             disponíveis nos métodos do servidor web SERPRO '''
         
-        self.cpf = cpf
+        self.cpf = cpf  #cpf
         self.anoinicial = anoinicial
         self.anofinal = anofinal
         dados = self.get_nome()
-        self.nome = dados['nome']
-        self.iu = dados['iu']
+        self.nome = dados['nome'] # nome
+        self.iu = dados['iu']  #iu
         dados = self.get_data_obito()
-        self.data_obito = dados['data_de_obito'] if dados else ""       
-        self.vinculos = self.get_vinculos()
-        self.descricao_vinculos = self.get_descricao_vinculos()
+        self.data_obito = dados['data_de_obito'] if dados else "" # data obito      
+        self.vinculos = self.get_vinculos() # vinculos
+        self.descricao_vinculos = self.get_descricao_vinculos() # descricao vinculos
 
     def get_nome(self)->dict:
         '''retorna \n
