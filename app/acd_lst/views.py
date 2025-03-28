@@ -31,6 +31,8 @@ from src.acd_gera_excel import *
 from src.configura_debug import *
 from src.acd_datetools import DateTools
 
+import pandas as pd
+
 def ficha(request):
 	return render(request,'ficha.html',{})
 
@@ -214,13 +216,26 @@ def calculo2886(request):
 	if request.method == "POST":
 			
 		# cria um dicionário com todos os itens dos formulários
-		resultado = [{key: value} for key, value in request.POST.items()]
-		del resultado[0]
+		dict_formularios = [{key: value} for key, value in request.POST.items()]
+		del dict_formularios[0]
 		
 		arquivo_simplificado = TextIOWrapper(request.FILES['arquivo_simplificado'].file, encoding='latin-1')
 		arquivo_completo = TextIOWrapper(request.FILES['arquivo_completo'].file, encoding='latin-1')
 
-		df1 = Calculos.calcular_2886_sicape(arquivo_simplificado, arquivo_completo, resultado)
+		df_calculo2886 = Calculos.calcular_2886_sicape(arquivo_simplificado, arquivo_completo, dict_formularios)
+
+		info(f"DF-CALCULO2886 ********************************\n{df_calculo2886}")
+
+		# Converte os dataframes para dicionários (serializáveis)
+		for item in df_calculo2886:
+			if 'dataframes' in item and isinstance(item['dataframes'], tuple):
+				item['dataframes'] = tuple(
+                    df.to_dict(orient='records') if not df.empty else {}  # Converte para dicionário ou vazio
+                    for df in item['dataframes']
+                )
+		
+		info(f"DF-CALCULO2886 ********************************\n{df_calculo2886}")
+
 		
 		"""
 		aqui views vai chamar o método Calculos.calcular2886_sicape(resultado, arquivo_simplificado, arquivo_completo)
@@ -236,49 +251,16 @@ def calculo2886(request):
 		deve retorna um dataframe para os calculos e um dataframe para o consolidado.
 		
 		"""
-		
-
 
 
 		# # cria um dicionário para os campos e uma lista de dicionários para as rubricas retirando as de tipo 'N'
-		campos, rubricas_base_2886 = Utils.extrair_campos(resultado)
+		campos, rubricas_base_2886 = Utils.extrair_campos(dict_formularios)
 		# #info(f'CAMPOS:\n{campos}')
-		# #info(f'rubricas_base_2886:\n{rubricas_base_2886}')  	
-
-		# # filtrar apenas as rubricas de rendimentos da extração do sicape
-		# linhas_rendimento_arquivo_completo = Utils.filtrar_rendimentos_sicape(arquivo_completo)
-		# #info(f'arquivo completo rendimentos:\n{linhas_rendimento_arquivo_completo}')
-
-		# # obter os códigos das rubricas da extração de rendimentos filtrada
-		# lista_rubricas_extracao = Utils.obter_rubricas_extracao_sicape(linhas_rendimento_arquivo_completo)		
-		# #info(f"rubricas_extracao:\n{lista_rubricas_extracao}")	
-
-		# # obter uma lista das rubricas de extração que estão contidas nas rubricas da base 2886
-		# lista_rubricas_calculo = Utils.extrair_fitas_sicape(rubricas_base_2886, lista_rubricas_extracao)
-		# info(f"lista_rubricas_calculo: {lista_rubricas_calculo}")		
-		
-		# # criar uma lista de dicionários separando os exequentes com suas respectivas rubricas extraídas
-		# resposta = Utils.processar_arquivo_completo_e_simplificado_sicape(arquivo_simplificado, 
-		# 																 linhas_rendimento_arquivo_completo, 
-		# 																 lista_rubricas_calculo)
-		
-		# # obter a descricao das rubricas do calculo
-		# descricao_rubricas_calculo = Utils.obter_descricao_rubricas_sicape(resposta)
-        
-		# # Exibir o resultado
-		# info(f"descricao:\n{descricao_rubricas_calculo}")
-
-		# # no metodo processar arquivo compleo e simplificado tem que passar a lista de rubricas de calculo.
-
-		# #resultado_calculo_2886 = Matriz.Calculo2886.calcular2886(parametros)
-		
-		# #info(f'resposta:\n{resposta}')
-
-
+		# #info(f'rubricas_base_2886:\n{rubricas_base_2886}')
 		
 		# Armazenar os dados na sessão
 		request.session['campos'] = campos
-		#request.session['varios_cpf_ativo'] = varios_cpf_ativo
+		request.session['df_calculo2886'] = df_calculo2886
 		#request.session['varios_cpf_pensionista'] = varios_cpf_pensionista
 		request.session['rubricas'] = rubricas_base_2886		
 		
@@ -304,36 +286,101 @@ def calculo2886(request):
 			'teste':teste})
 
 
+
 def resultado2886(request):
-# Recuperar os dados da sessão
-	resultado = request.session.get('resultado', 'Nenhum resultado disponível.')
-	campos = request.session.get('campos', 'Nenhuma rubrica disponivel')
-	lista_ativo = []
-	lista_pensionista = []
+		
+		calculo = request.session.get('df_calculo2886')
+		
+		if calculo is None:
+			info("Nenhum dado encontrado na sessão.")
+			return render(request, 'resultado2886.html', {'resultado': ''})
 
-	# for item in resultado:
-	# 	for key, value in item.items():
-	# 		info(f'key:{key}')
-	# 		info(f'value:{value}')
+
+		# processar e ajustar os dados antes de renderizar o template, formatar a data e os números
+		for item in calculo:
+			if 'dataframes' in item:
+				dataframes_processados = []
+				for df in item['dataframes']:
+					if df:						
+						for row in df:
+							for key, value in row.items():
+								
+								if isinstance(value, (int, float)):  # Verifica se é número (int ou float)
+									#row[key] = f"{value:.2f}".replace('.', ',')  # Formata para duas casas decimais e ponto para o milhar
+									#row[key] = f"{value:,.2f}".replace('.', ',').replace(',', '.', 1)  # Troca a vírgula para ponto e coloca espaço no milhar
+									row[key] = f"{value:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+
+								# Converter datas para formato "03/1993"
+								if key.lower() == 'mês/ano' and isinstance(value, str): # verifica se a data é (str)									
+									try:										
+										value = datetime.strptime(value, '%Y-%m-%d').strftime('%m/%Y')
+										row[key] = value
+									except ValueError:
+										pass
+								# formatar para 2 casas decimais os números
+								#elif isinstance(value, (int, float)):
+								#	row[key] = round(value, 2)
+						dataframes_processados.append(df)
+					else:
+						dataframes_processados.append([])
+				item['dataframes'] = dataframes_processados
+		
+		
+		# Renderizar o template com os dados
+		return render(request, 'resultado2886.html', {'resultado': calculo})
+
+
+
+# def resultado2886(request):
+# # Recuperar os dados da sessão
+# 	#resultado = request.session.get('df_calculo2886', 'Nenhum resultado disponível.')
+# 	campos = request.session.get('campos', 'Nenhuma rubrica disponivel')
+# 	lista_ativo = []
+# 	lista_pensionista = []
+# 	#resultado = request.session.get('dicionario_df', '')
+# 	#info(f"resultado:\n{resultado}")
+
+# 	resultado = [
+#         {
+#             'iu': 8922020,
+#             'cpf': '134.927.136-53',
+#             'nome': 'VERA LUCIA DUARTE',
+#             'matricula': '0',
+#             'beneficiario': '0',
+#             'cargo': '11-3/AIII',
+#             'dataframes': (
+#                 pd.DataFrame({
+#                     "Mês/Ano": ["1993-01-01", "1993-02-01", "1993-03-01"],
+#                     "1": [6545668.00, 9737260.00, 11471171.32],
+#                     "5": [0.0, 0.0, 0.0],
+#                     "13": [130913.36, 707585.94, 445986.36]
+#                 }),
+#                 pd.DataFrame({
+#                     "Mês/Ano": ["1993-01-01", "1993-02-01", "1993-03-01"],
+#                     "15": [1680143.50, 1680143.50, 2234590.85],
+#                     "24": [0.00, 110515.81, 0.00],
+#                     "25": [1320112.75, 1320112.75, 1755749.95]
+#                 }),
+#                 pd.DataFrame(),  # DataFrame vazio
+#                 pd.DataFrame({
+#                     "Mês/Ano": ["2002-12-01", "2003-08-01", "2003-12-01"],
+#                     "82175": [366.37, 393.59, 956.66]
+#                 })
+#             )
+#         }
+#     	]
+
 	
-	#info(f'resultado:\n{resultado}')
-			
-	# Limpar espaços extras e remover linhas vazias
-	#lista_ativo = [cpf.strip() for cpf in lista_ativo if cpf.strip()]
-	#lista_pensionista = [cpf.strip() for cpf in lista_pensionista if cpf.strip()]
-
-	# Exibir os resultados
-	#info("Ativos/Aposentados:", lista_ativo)
-	#info("Pensionistas:", lista_pensionista)
-
-
-	#cpf_ativos = request.session.get('varios_cpf_ativo', '')
-	#cpf_pensionistas = request.session.get('varios_cpf_pensionista')
-	#info(f'ativos:\n{cpf_ativos}')
-	#info(f'pensionistas:\n{cpf_pensionistas}')
+# 	for item in resultado:
+# 		if 'dataframes' in item and isinstance(item['dataframes'], tuple):
+# 			item['dataframes'] = tuple(
+#                 df.to_html(index=False, classes='table table-striped') if not df.empty else '<p>Nenhum dado disponível</p>'
+#                 for df in item['dataframes']
+#             )
 	
-	return render(request, 'resultado2886.html', {'resultado': resultado, 'campos': campos})
+# 	return render(request, 'resultado2886.html', {'resultado': resultado, 'campos': campos})# for item in resultado:
 
+	
 #---------------------------------------------------------------------------------------------------------------
 
 

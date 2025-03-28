@@ -101,7 +101,7 @@ class MatrizSerpro:
 
         #info(f"ficha:\n{ficha}")
 
-        resultado = cls.montar_dataframe_2886_sicap(ficha, lista_rubricas_calculo)
+        resultado_df = cls.montar_dataframe_2886_sicap(ficha, lista_rubricas_calculo)
 
         #resultado_processado = cls.processar_dataframe_2886(a,b,c)
         # deve processar ajustado pro-rata, data-obito, ferias e decimo-terceiro. também
@@ -109,19 +109,21 @@ class MatrizSerpro:
 
         
         
-        pd.set_option('display.max_rows', None)
-        pd.set_option('display.max_columns', None)
-        pd.set_option("display.float_format", "{:.2f}".format)
+        #pd.set_option('display.max_rows', None)
+        #pd.set_option('display.max_columns', None)
+        #pd.set_option("display.float_format", "{:.2f}".format)
 
         # Exibir os DataFrames
         # Exibir o resultado
-        for exequente in resultado:
-            info(f"Exequente: {exequente['nome']} (CPF: {exequente['cpf']})")
-            info("DataFrames:")
-            for idx, categoria in enumerate(['C', 'F', 'R', 'P']):
-                info(f"DataFrame {categoria}:")
-                info(f"\n{exequente['dataframes'][idx]}\n")
-            info("\n")      
+        # for exequente in resultado:
+        #     info(f"Exequente: {exequente['nome']} (CPF: {exequente['cpf']})")
+        #     info("DataFrames:")
+        #     for idx, categoria in enumerate(['C', 'F', 'R', 'P']):
+        #         info(f"DataFrame {categoria}:")
+        #         info(f"\n{exequente['dataframes'][idx]}\n")
+        #     info("\n")
+
+        return resultado_df      
         
     
     

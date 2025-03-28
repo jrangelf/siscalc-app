@@ -50,8 +50,7 @@ class TabelasSerpro:
 
          dicionario_dataframes = MatrizSerpro.matriz_2886_sicap(ficha, descricao_rubricas_calculo, lista_rubricas_calculo, campos)
 
-         
-         return
+         return dicionario_dataframes
          
 
    

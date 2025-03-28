@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado 2886</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        .table-container {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+
+
+<body>
+    {% for item in resultado %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>{{ item.nome }}</h4>
+        </div>
+        <div class="card-body">
+            <p><strong>IU:</strong> {{ item.iu }}</p>
+            <p><strong>CPF:</strong> {{ item.cpf }}</p>
+            <p><strong>Matrícula:</strong> {{ item.matricula }}</p>
+            {% for df in item.dataframes %}
+                {% if df %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    {% for key in df.0.keys %}
+                                        <th>{{ key }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in df %}
+                                    <tr>
+                                        {% for value in row.values %}
+                                            <td>{{ value }}</td>
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>Sem dados disponíveis</p>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+{% endfor %}
+
+</body>
+
+
+
+
+
+
+<!--
+<body>
+    <div class="container">
+        <h3>Resultado 2886</h3>
+        {% for item in resultado %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>{{ item.nome }}</h4>
+                </div>
+                <div class="card-body">
+                    <p><strong>IU:</strong> {{ item.iu }}</p>
+                    <p><strong>CPF:</strong> {{ item.cpf }}</p>
+                    <p><strong>Matrícula:</strong> {{ item.matricula }}</p>
+                    <p><strong>Beneficiário:</strong> {{ item.beneficiario }}</p>
+                    <p><strong>Cargo:</strong> {{ item.cargo }}</p>
+
+                    <h4>DataFrames</h4>
+                    {% for df_html in item.dataframes %}
+                        <div class="table-container">
+                            {{ df_html|safe }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+<body>
+-->
+ <h6>{{ campos }}</h6>   
+    
+
+</html>
