@@ -6,8 +6,45 @@
     <title>Resultado 317</title>
 </head>
 <body>
+
+    {% for i in resultado|slice:":19" %}
+        {% for chave, valor in i.items %}
+            <p>{{ chave }}: {{ valor }}</p>
+        {% endfor %}
+    {% endfor %}
+
+    {% for i in resultado|slice:"-9:" %}
+        {% for chave, valor in i.items %}
+            <p>{{ chave }}: {{ valor }}</p>
+        {% endfor %}
+    {% endfor %}
+
+
+<!--
+
+    {% for item in resultado %}
+        {% if 'dtatualizacao' in item %}
+            <p>Data de Atualização: {{ item.dtatualizacao }}</p>
+        {% endif %}
+    {% endfor %}
+    <hr>
+
+
+    {% for i in resultado %}
+        {% for chave, valor in i.items %}
+            <p>{{ chave }}: {{ valor }}</p>
+        {% endfor %}
+    {% endfor %}
+-->
+</body>
+
+
+<!--
+<body>
+    <p>resultado.dtatualizacao</p>
     {% for i in resultado %}
     <p>{{i}}</p>
     {% endfor %}
 </body>
 </html>
+-->

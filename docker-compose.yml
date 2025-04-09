@@ -17,8 +17,8 @@ services:
     volumes:
       - ./app:/app
       - static_data:/app/static     
-    env_file:
-      - ./env/app.env
+    #env_file:
+    #  - ./env/app.env
     
   
   #nginx:

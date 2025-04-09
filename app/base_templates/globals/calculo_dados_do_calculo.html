@@ -4,14 +4,14 @@
   </div>		
   <hr>
     <div class="row">
-        
+
         <div class="col-sm-6"> 
             <label for="tabpnep" class="form-label"><h6>Índice de atualização</h6></label>
-            <select class="form-control" id="selecaoPnep" name="tabpnep" required>
-                <option></option>
+            <select class="form-control" id="selecaoPnep" name="tabpnep" required>                
                 {% if pnep %}
                     {% for j in pnep %}
-                        <option value="{{ j }}">{{ j }}</option>
+                        <!-- <option value="{{ j }}">{{ j }}</option> -->
+                        <option value="{{ j }}" {% if j == "Tabela c.m. cond. geral IPCA-E" %}selected{% endif %}>{{ j }}</option>
                     {% endfor %}
                 {% endif %}							
             </select>	
@@ -19,11 +19,11 @@
 
         <div class="col-sm-6"> 
             <label for="tabjuros" class="form-label"><h6>Juros</h6></label>
-            <select class="form-control" id="selecaoJuros" name="tabjuros" required>
-                <option></option>
+            <select class="form-control" id="selecaoJuros" name="tabjuros" required>                
                 {% if juros %}
                     {% for k in juros %}
-                        <option value="{{ k }}">{{ k }}</option>
+                        <!-- <option value="{{ k }}">{{ k }}</option> -->
+                        <option value="{{ k }}" {% if k == "Juros 0,5% até junho de 2009" %}selected{% endif %}>{{ k }}</option>
                     {% endfor %}
                 {% endif %}							
             </select>	
@@ -51,7 +51,7 @@
                 <input type="hidden" name="aplicarSELIC" value="off">
                 <input class="form-check-input" type="checkbox"  name="aplicarSELIC" id="aplicarSELIC" checked>
                 
-                   Aplicar SELIC
+                   Aplicar SELIC - EC 113/2021
                 </label>					     
             </div>					    
         </div>

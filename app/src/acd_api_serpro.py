@@ -1,14 +1,155 @@
 import pandas as pd
 from typing import Optional, List, Dict, Tuple
+
 from src.acd_datetools import *
 from src.acd_utils import Utils
-
 from src.api_serpro import ApiSerpro
 
 
 class MatrizSerpro:
     
+    @classmethod
+    def matriz_tresdezessete(cls,
+                            cpf: str,
+                            anoi: int,
+                            anof: int,
+                            basecalculo: list,
+                            basepagamentos: list,
+                            termo_inicial: str,
+                            orgao: Optional[int]= None) -> Tuple [pd.DataFrame, pd.DataFrame, List]:
+      
+      extracao = cls.obter_rubricas(cpf, anoi, anof, orgao)
+      unicas = Utils.obter_codigos_rubricas_ficha(extracao)
+      
+      # retirar apenas as que estão na base de cálculo para compor o cabeçalho
+      conjunto_base = set(basecalculo+basepagamentos)
+      rubricas_cabecalho = [item for item in unicas if item in conjunto_base]
+      rubricas_com_descricao = []      
+      for rubrica in rubricas_cabecalho:          
+          resposta = ApiSerpro.obter_descricao_rubrica(rubrica)
+          if resposta and 'descricao' in resposta:
+              descricao_trim = resposta['descricao'].strip() if resposta['descricao'] else "N/A"              
+              rubricas_com_descricao.append({rubrica: descricao_trim})
+          else:              
+              rubricas_com_descricao.append({rubrica: "N/A"})
+      
+      # retirar data, codrubrica e valor da extração de rubricas
+      chaves = ['datapagto', 'codrubrica', 'valor']
+      rendimentos = Utils.filtrar_dados_lista_dicionarios(extracao, chaves, 'rendimento', 1)
+      df_base, df_pagtos = cls.montar_dataframe_rendimentos(rubricas_cabecalho, 
+                                                                    rendimentos,
+                                                                    basepagamentos,
+                                                                    termo_inicial)
+      return df_base, df_pagtos, rubricas_com_descricao
+   
+
+    @classmethod
+    def matriz_tresdezessete_pensionista(cls,
+                            cpf: str,
+                            anoi: int,
+                            anof: int,
+                            basecalculo: list,
+                            basepagamentos: list,
+                            termo_inicial: str,
+                            orgao: Optional[int]= None) -> Tuple [pd.DataFrame, pd.DataFrame, List]:
+        ...
     
+    
+    
+    @classmethod
+    def obter_rubricas(cls,
+                         cpf: str,
+                         anoi: int,
+                         anof: int,
+                         orgao: Optional[int] = None) -> List[Dict]:
+		
+        """ extrai rubricas da API e filtra por órgão, se fornecido """
+        extracao = ApiSerpro.get_extrair_rubricas(cpf, anoi, anof)
+		
+        if orgao is not None:
+            extracao = [item for item in extracao if item.get('codorgao') == orgao]
+        return extracao
+
+
+    @classmethod
+    def montar_dataframe_rendimentos(cls,
+								  	 cabecalho: list,
+									 rendimentos: list,
+									 basepagtos: list,
+									 termo_inicial: str) -> Tuple [pd.DataFrame, pd.DataFrame]:
+		
+
+		# converter a lista de dicionários em um DataFrame
+        df = pd.DataFrame(rendimentos)
+
+		# agrupar por 'datapagto' e 'codrubrica', somando os valores
+        df_agrupado = df.groupby(['datapagto', 'codrubrica'], as_index=False)['valor'].sum()
+		
+		# criar um DataFrame pivot com 'datapagto' como índice e 'codrubrica' como colunas
+        df_pivot = df_agrupado.pivot(index='datapagto', columns='codrubrica', values='valor')
+
+        # Remover o nome 'codrubrica' das colunas
+        df_pivot = df_pivot.rename_axis(columns=None)
+		
+		# reordenar as colunas para incluir todas as colunas do cabeçalho
+        df_pivot = df_pivot.reindex(columns=cabecalho, fill_value=0)
+		
+		# resetar o índice para que 'datapagto' seja uma coluna
+        df_final = df_pivot.reset_index()
+		
+		# separar a matriz base de pagtos, retira a coluna datapagto e as colunas da base calculo pagtos
+        colunas_base_pagtos = [coluna for coluna in basepagtos if coluna in df_final]		
+        df2 = df_final[['datapagto'] + colunas_base_pagtos]
+        df2 = df2.fillna(0)
+        df2['datapagto'] = DateTools.converter_data_serie_ano_mes_datetime(df2, 'datapagto')		
+
+		# separar a matriz base de cálculo
+        colunas_base_calculo = [coluna for coluna in df_final.columns if coluna not in basepagtos]
+        df1 = df_final[colunas_base_calculo]
+        df1 = df1.fillna(0)
+		
+		# colocar a coluna 1/3 férias na última posição
+        coluna_ferias = df1.pop(220)
+        df1[220] = coluna_ferias
+		
+		#calcular 1/3 de férias
+        indice_datapagto = df1.columns.get_loc('datapagto')
+        indice_ferias = df1.columns.get_loc(220) # coluna da rubrica 220 (1/3 férias)		
+        df1.loc[df1[220] !=0, 220] = df1.iloc[:, indice_datapagto + 1: indice_ferias].sum(axis=1) / 3
+
+		# formatar data para timestamp
+        df1['datapagto'] = DateTools.converter_data_serie_ano_mes_datetime(df1, 'datapagto')		
+		
+		# calcular a soma e o décimo terceiro (convencionado em novembro)
+        colunas_somar = df1.columns[1:]
+        df1['soma'] = df1[colunas_somar].sum(axis=1)
+        df1.loc[df1['datapagto'].dt.month == 11, 'soma'] *= 2	
+		
+		# aplicar pro-rata
+        pro_rata = DateTools.calcular_pro_rata(termo_inicial)
+        
+        if pro_rata < 1:
+            data_inicio_calculo = DateTools.converter_string_para_datetime_dia_primeiro(termo_inicial)
+            condicao = df1['datapagto'] == data_inicio_calculo
+            df1.loc[condicao, 'soma'] *= pro_rata
+
+		# calcular o valor devido
+        df1['(%)'] = 0.0317
+        df1['valor_devido'] = df1['soma'] * df1['(%)']		
+
+        return df1, df2
+
+
+
+
+
+
+
+
+
+
+
+
     @classmethod
     def montar_dataframe_2886_sicap(cls, ficha, rubricas_calculo):
         
@@ -22,6 +163,13 @@ class MatrizSerpro:
             matricula = exequente['matricula']
             beneficiario = exequente['beneficiario']
             cargo = exequente['cargo']
+
+            # Verificar a data de obito            
+            cpf_limpo = cpf.replace(".", "").replace("-", "")
+            dt_obito = ApiSerpro.pesquisar_data_de_obito(cpf_limpo)            
+            if dt_obito:
+                data_obito = dt_obito.get('data_de_obito', '')
+                info(f"## data de obito: ##:  {data_obito}")
             
             # Processar as rubricas do funcionário
             dados_por_categoria = {categoria: {} for categoria in rubricas_calculo.keys()}
@@ -79,7 +227,7 @@ class MatrizSerpro:
         return resultado
 
     @classmethod
-    def processar_dataframe_2886(cls,a,b,c):
+    def processar_dataframe_2886(cls, resultado_df, campos):
         ...
     
     
@@ -90,20 +238,22 @@ class MatrizSerpro:
                           lista_rubricas_calculo, 
                           campos):
         
-        #info(f'CAMPOS:\n{campos}')
+        info(f'CAMPOS:\n{campos}')
+
         #info(f'rubricas_base_2886:\n{rubricas_base_2886}')
         #info(f'arquivo completo rendimentos:\n{linhas_rendimento_arquivo_completo}')
 
         info(f"lista_rubricas_calculo: {lista_rubricas_calculo}")
         
          # Exibir o resultado
-        #info(f"descricao:\n{descricao_rubricas_calculo}")
+        info(f"descricao:\n{descricao_rubricas_calculo}")
 
         #info(f"ficha:\n{ficha}")
 
         resultado_df = cls.montar_dataframe_2886_sicap(ficha, lista_rubricas_calculo)
 
-        #resultado_processado = cls.processar_dataframe_2886(a,b,c)
+        #resultado_processado = cls.processar_dataframe_2886(resultado_df, campos)
+        
         # deve processar ajustado pro-rata, data-obito, ferias e decimo-terceiro. também
         # incluir as colunas que devem ser repetidas no F e R.
 
@@ -143,112 +293,7 @@ class MatrizSerpro:
     
     
     
-    @classmethod
-    def matriz_trezdezessete(cls,
-                            cpf: str,
-                            anoi: int,
-                            anof: int,
-                            basecalculo: list,
-                            basepagamentos: list,
-                            termo_inicial: str,
-                            orgao: Optional[int]= None) -> Tuple [pd.DataFrame, pd.DataFrame, List]:
-      
-      extracao = cls.obter_rubricas(cpf, anoi, anof, orgao)
-      unicas = Utils.obter_codigos_rubricas_ficha(extracao)
-      
-      # retirar apenas as que estão na base de cálculo para compor o cabeçalho
-      conjunto_base = set(basecalculo+basepagamentos)
-      rubricas_cabecalho = [item for item in unicas if item in conjunto_base]
-            
-      # retirar data, codrubrica e valor da extração de rubricas
-      chaves = ['datapagto', 'codrubrica', 'valor']
-      rendimentos = Utils.filtrar_dados_lista_dicionarios(extracao, chaves, 'rendimento', 1)
-      df_base, df_pagtos = cls.montar_dataframe_rendimentos(rubricas_cabecalho, 
-                                                                    rendimentos,
-                                                                    basepagamentos,
-                                                                    termo_inicial)
-      return df_base, df_pagtos, rubricas_cabecalho
-   
 
-    @classmethod
-    def obter_rubricas(cls,
-                         cpf: str,
-                         anoi: int,
-                         anof: int,
-                         orgao: Optional[int] = None) -> List[Dict]:
-		
-        """ extrai rubricas da API e filtra por órgão, se fornecido """
-        extracao = ApiSerpro.get_extrair_rubricas(cpf, anoi, anof)
-		
-        if orgao is not None:
-            extracao = [item for item in extracao if item.get('codorgao') == orgao]
-        return extracao
-
-
-    @classmethod
-    def montar_dataframe_rendimentos(cls,
-								  	 cabecalho: list,
-									 rendimentos: list,
-									 basepagtos: list,
-									 termo_inicial: str) -> Tuple [pd.DataFrame, pd.DataFrame]:
-		
-
-		# converter a lista de dicionários em um DataFrame
-        df = pd.DataFrame(rendimentos)
-
-		# agrupar por 'datapagto' e 'codrubrica', somando os valores
-        df_agrupado = df.groupby(['datapagto', 'codrubrica'], as_index=False)['valor'].sum()
-		
-		# criar um DataFrame pivot com 'datapagto' como índice e 'codrubrica' como colunas
-        df_pivot = df_agrupado.pivot(index='datapagto', columns='codrubrica', values='valor')
-		
-		# reordenar as colunas para incluir todas as colunas do cabeçalho
-        df_pivot = df_pivot.reindex(columns=cabecalho, fill_value=0)
-		
-		# resetar o índice para que 'datapagto' seja uma coluna
-        df_final = df_pivot.reset_index()
-		
-		# separar a matriz base de pagtos, retira a coluna datapagto e as colunas da base calculo pagtos
-        colunas_base_pagtos = [coluna for coluna in basepagtos if coluna in df_final]		
-        df2 = df_final[['datapagto'] + colunas_base_pagtos]
-        df2 = df2.fillna(0)
-        df2['datapagto'] = DateTools.converter_data_serie_ano_mes_datetime(df2, 'datapagto')		
-
-		# separar a matriz base de cálculo
-        colunas_base_calculo = [coluna for coluna in df_final.columns if coluna not in basepagtos]
-        df1 = df_final[colunas_base_calculo]
-        df1 = df1.fillna(0)
-		
-		# colocar a coluna 1/3 férias na última posição
-        coluna_ferias = df1.pop(220)
-        df1[220] = coluna_ferias
-		
-		#calcular 1/3 de férias
-        indice_datapagto = df1.columns.get_loc('datapagto')
-        indice_ferias = df1.columns.get_loc(220) # coluna da rubrica 220 (1/3 férias)		
-        df1.loc[df1[220] !=0, 220] = df1.iloc[:, indice_datapagto + 1: indice_ferias].sum(axis=1) / 3
-
-		# formatar data para timestamp
-        df1['datapagto'] = DateTools.converter_data_serie_ano_mes_datetime(df1, 'datapagto')		
-		
-		# calcular a soma e o décimo terceiro (convencionado em novembro)
-        colunas_somar = df1.columns[1:]
-        df1['soma'] = df1[colunas_somar].sum(axis=1)
-        df1.loc[df1['datapagto'].dt.month == 11, 'soma'] *= 2	
-		
-		# aplicar pro-rata
-        pro_rata = DateTools.calcular_pro_rata(termo_inicial)
-        
-        if pro_rata < 1:
-            data_inicio_calculo = DateTools.converter_string_para_datetime_dia_primeiro(termo_inicial)
-            condicao = df1['datapagto'] == data_inicio_calculo
-            df1.loc[condicao, 'soma'] *= pro_rata
-
-		# calcular o valor devido
-        df1['(%)'] = 0.0317
-        df1['valor_devido'] = df1['soma'] * df1['(%)']		
-
-        return df1, df2
 
 
 

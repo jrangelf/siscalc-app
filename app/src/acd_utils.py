@@ -45,7 +45,7 @@ class Utils:
         return valor_iam, valor_juros
 
     @classmethod
-    def extrair_campos(cls, lista_campos: list) -> tuple:
+    def extrair_campos(cls, lista_campos: list, primeiros: int, ultimos: int) -> tuple:
         """ recebe a lista dos campos e extrai um dicionário em que as chaves são os campos dos formulários e
             uma lista de dicionários de rubricas do arquivo de extração SICAPE sem o tipo 'N'
             
@@ -116,12 +116,12 @@ class Utils:
                     resultado_ajustado.append(novo_dicionario)                    
             return resultado_ajustado               
         
-        primeiros_18 = lista_campos[:18]
-        ultimos_9 = lista_campos [-9:]
+        primeiros_campos = lista_campos[:primeiros]
+        ultimos_campos = lista_campos [-ultimos:]
         valores = {}
-        for d in primeiros_18 + ultimos_9:
+        for d in primeiros_campos + ultimos_campos:
             valores.update(d)
-        rubricas = ajustar_lista(lista_campos[18:-9])        
+        rubricas = ajustar_lista(lista_campos[primeiros:-ultimos])        
         return valores, rubricas
     
 
@@ -373,7 +373,7 @@ class Utils:
             resposta (List[Dict[str, Any]]): Lista de dicionários, onde cada dicionário contém informações
                                             sobre um beneficiário e suas rubricas.
         Returns:
-            Dict[int, str]: Dicionário onde as chaves são códigos de rubrica (int) e os valores são
+            (Dict[int, str]): Dicionário onde as chaves são códigos de rubrica (int) e os valores são
                             descrições (str), sem repetição e ordenados numericamente.
         """        
         descricao = {}
@@ -389,6 +389,64 @@ class Utils:
 
         # Ordenar o dicionário pelo código de rubrica (chave)
         return dict(sorted(descricao.items()))
+    
+
+    @classmethod
+    def obter_codigo_por_descricao(cls, lista, descricao):
+        """
+        Função que recebe uma lista de listas e uma descrição,
+        e retorna o código correspondente à descrição.
+        :param lista: Lista de listas contendo [id, codigo, descricao].
+        :param descricao: A descrição para buscar na lista.
+        :return: O código correspondente à descrição ou None se não encontrado.
+        """
+        for item in lista:
+            if item[2] == descricao:  # Verifica se o terceiro elemento é igual à descrição
+                return item[1]  # Retorna o segundo elemento (código)
+        return None  # Retorna None se a descrição não for encontrada
+    
+
+    @classmethod
+    def separar_codigos_rubricas_por_tipo(cls, lista_dicionarios):        
+        """
+        Separa os valores de 'codigo' (convertidos para inteiros) de uma lista de
+        dicionários em duas listas, uma para o tipo 'S' e outra para o tipo 'P',
+        mantendo a ordem numérica e sem repetições.
+
+        Args:
+            lista_dicionarios: Uma lista de dicionários, onde cada dicionário
+                            contém as chaves 'codigo' e 'tipo'.
+
+        Returns:
+            Uma tupla contendo duas listas:
+                - tipo_s: Lista dos valores de 'codigo' (inteiros) para os
+                        dicionários com 'tipo' igual a 'S', em ordem numérica
+                        e sem repetições.
+                - tipo_p: Lista dos valores de 'codigo' (inteiros) para os
+                        dicionários com 'tipo' igual a 'P', em ordem numérica
+                        e sem repetições.
+        """
+        codigos_s = set()
+        codigos_p = set()
+
+        for item in lista_dicionarios:
+            codigo_str = item.get('codigo')
+            tipo = item.get('tipo')
+            try:
+                codigo_int = int(codigo_str.replace('.',''))
+                if tipo == 'S':
+                    codigos_s.add(codigo_int)
+                elif tipo == 'P':
+                    codigos_p.add(codigo_int)
+            except (ValueError, TypeError):
+                # Lidar com casos onde 'codigo' não é um número válido
+                print(f"Ignorando código não numérico: '{codigo_str}'")
+                continue
+
+        tipoS = sorted(list(codigos_s))
+        tipoP = sorted(list(codigos_p))
+
+        return tipoS, tipoP
 
 
 

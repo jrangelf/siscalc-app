@@ -9,6 +9,73 @@ class TabelasSerpro:
 
 
       @classmethod
+      def tabelaTresDezessete (cls, 
+                               cpf: str, 
+                               anoi: int, 
+                               anof: int, 
+                               basecalculo: list, 
+                               basepgtos: list,
+                               termo_inicial: str, # data inicial do cálculo
+                               termo_final: str,   # data final do cálculo
+                               data_citacao: str,
+                               data_atualizacao: str,
+                               percentual: int, 
+                               orgao: Optional[int] = None,
+                               pensionista: bool = False) -> Tuple [pd.DataFrame, pd.DataFrame, List]:      
+         
+         if pensionista:
+            df_base, df_pagtos, rubricas_cabecalho = MatrizSerpro.matriz_tresdezessete_pensionista(cpf,
+                                                                                                   anoi,
+                                                                                                   anof,
+                                                                                                   basecalculo,
+                                                                                                   basepgtos,
+                                                                                                   termo_inicial,
+                                                                                                   orgao)
+         else:
+             df_base, df_pagtos, rubricas_cabecalho = MatrizSerpro.matriz_tresdezessete(cpf,
+                                                                                        anoi,
+                                                                                        anof,
+                                                                                        basecalculo,
+                                                                                        basepgtos,
+                                                                                        termo_inicial,
+                                                                                        orgao)
+         
+         data_inicio_calculo = DateTools.converter_string_para_datetime_dia_primeiro(termo_inicial)
+         data_final_calculo = DateTools.converter_string_para_datetime_dia_primeiro(termo_final)
+      
+         # separa o dataframe do período de cálculo
+         df_calculo = df_base[(df_base['datapagto'] >= data_inicio_calculo) & (df_base['datapagto'] <= data_final_calculo)]
+      
+         # Eliminando as linhas onde todos os valores são zero (exceto a primeira coluna da data)
+         #df_pagamentos = df_pagtos[~(df_pagtos.iloc[:, 1:] == 0).all(axis=1)]
+
+         df_pagamentos = df_pagtos[(df_pagtos.iloc[:, 1:] != 0).any(axis=1)]
+      
+         info(f"\n\nacd_serpro_calculo\n[     DF_PAGTOS    ]\n\n\n{df_pagtos}")
+         
+         #check if any value in the specified columns is non-zero. This approach is conceptually equivalent but avoids using the ~ operator.
+         #df_pagamentos = df_pagtos[(df_pagtos.iloc[:, 1:] != 0).any(axis=1)] # mais conciso e eficiente
+
+         # it sums the values in the specified columns and filter rows where the sum is greater than zero. This works because the sum of zeros is zero
+         #df_pagamentos = df_pagtos[df_pagtos.iloc[:, 1:].sum(axis=1) > 0]
+
+
+         return df_calculo, df_pagamentos, rubricas_cabecalho
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      @classmethod
       
       def tabela_2886_sicape(cls, 
                              simplificado,

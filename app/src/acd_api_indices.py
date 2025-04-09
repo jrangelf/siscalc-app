@@ -60,6 +60,7 @@ class MatrizIndices:
         data_atualizacao = DateTools.converter_string_para_datetime_dia_primeiro(data_atualizacao)
         
         dados_brutos = cls.carregar_tabela_juros(nome_tabela)
+
         df = pd.DataFrame(dados_brutos)        
 
         #df['data'] = pd.to_datetime(df['data'])

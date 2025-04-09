@@ -179,36 +179,14 @@ def resumo(request):
 
  	
 
-def resultado317(request):
-	# Recuperar os dados da sessão
-	resultado = request.session.get('resultado', 'Nenhum resultado disponível.')
-	lista_ativo = []
-	lista_pensionista = []
-
-	for item in resultado:
-		for key, value in item.items():
-			if key == "varios_cpf_ativo":
-				lista_ativo = value.splitlines()  # Quebra em lista, removendo linhas vazias
-			elif key == "varios_cpf_pensionista":
-				lista_pensionista = value.splitlines()
-
-	# Limpar espaços extras e remover linhas vazias
-	lista_ativo = [cpf.strip() for cpf in lista_ativo if cpf.strip()]
-	lista_pensionista = [cpf.strip() for cpf in lista_pensionista if cpf.strip()]
-
-	# Exibir os resultados
-	info("Ativos/Aposentados:", lista_ativo)
-	info("Pensionistas:", lista_pensionista)
-
-
-	#cpf_ativos = request.session.get('varios_cpf_ativo', '')
-	#cpf_pensionistas = request.session.get('varios_cpf_pensionista')
-	#info(f'ativos:\n{cpf_ativos}')
-	#info(f'pensionistas:\n{cpf_pensionistas}')
-	
-	return render(request, 'resultado317.html', {'resultado': resultado})
-
-
+#----------------------------------------------------------------------------------------------------------------------
+#####   #####      #####    #####
+    #  #     #    #     #  #
+    #  #     #    #     #  #
+#####   #####      #####   #####
+#      #     #    #     #  #    #
+#      #     #    #     #  #    #
+#####   #####  #   #####   ##### 
 #----------------------------------------------------------------------------------------------------------------------
 
 def calculo2886(request):
@@ -222,9 +200,12 @@ def calculo2886(request):
 		arquivo_simplificado = TextIOWrapper(request.FILES['arquivo_simplificado'].file, encoding='latin-1')
 		arquivo_completo = TextIOWrapper(request.FILES['arquivo_completo'].file, encoding='latin-1')
 
+		#info(f"DICT_FORMULARIOS:\n{dict_formularios}")
+		#campos, rubricas_base_2886 = Utils.extrair_campos(dict_formularios)
+		
 		df_calculo2886 = Calculos.calcular_2886_sicape(arquivo_simplificado, arquivo_completo, dict_formularios)
 
-		info(f"DF-CALCULO2886 ********************************\n{df_calculo2886}")
+		info(f"DF-CALCULO2886 (DATAFRAME) ********************************\n{df_calculo2886}")
 
 		# Converte os dataframes para dicionários (serializáveis)
 		for item in df_calculo2886:
@@ -234,7 +215,7 @@ def calculo2886(request):
                     for df in item['dataframes']
                 )
 		
-		info(f"DF-CALCULO2886 ********************************\n{df_calculo2886}")
+		#info(f"DF-CALCULO2886 (DICIONÁRIO) ********************************\n{df_calculo2886}")
 
 		
 		"""
@@ -380,28 +361,48 @@ def resultado2886(request):
 	
 # 	return render(request, 'resultado2886.html', {'resultado': resultado, 'campos': campos})# for item in resultado:
 
-	
-#---------------------------------------------------------------------------------------------------------------
-
-
-
-
+#----------------------------------------------------------------------------------------------------------------------	
+#----------------------------------
+			####     ##   ######  
+			   ##   ###       ##  
+			   ##    ##      ##  
+			####     ##     ##  
+			   ##    ##    ##  
+			   ##    ##   ##   
+			####  #  ##  ##  
+#----------------------------------
+#----------------------------------------------------------------------------------------------------------------------
 def calculo317(request):
 	if request.method == "POST":
+		
 		# cria um dicionário com os itens dos formulários
-		resultado = [{key: value} for key, value in request.POST.items()]
-		del resultado[0] # apaga o token
+		itens_formulario_dict = [{key: value} for key, value in request.POST.items()]
+		del itens_formulario_dict[0] # apaga o token
+		
 		varios_cpf_ativo = request.POST.get('varios_cpf_ativo', '')
 		varios_cpf_pensionista = request.POST.get('varios_cpf_pensionista', '')
-		# Exibir os resultados
-		info("calculo317:Ativos/Aposentados:", varios_cpf_ativo)
-		info("calculo317:Pensionistas:", varios_cpf_pensionista)		
+		
+		df_calculo317 = Calculos.calcular_317(itens_formulario_dict, varios_cpf_ativo, varios_cpf_pensionista)
 
+		
+		
+		
+		# Exibir os resultados
+		#info(f"calculo317:Ativos/Aposentados:\n{varios_cpf_ativo}")
+		#info(f"calculo317:Pensionistas:\n{varios_cpf_pensionista}")		
+
+		#df_calculo317 = Calculos.calcular_317(dict_campos, varios_cpf_ativo, varios_cpf_pensionista)
+		#info(f"dicionario de campos:\n{itens_formulario_dict}")
+
+		
+		
 		# Criar um dicionário para agrupar os códigos, descrições e tipos
 		dados = {}
-		for d in resultado:
+		for d in itens_formulario_dict:
 			for k, v in d.items():
 				dados[k] = v
+
+		#info(f"dados:\n{dados}")
 
 		## Identificar as chaves a serem removidas
 		chaves_para_remover = set()
@@ -412,15 +413,18 @@ def calculo317(request):
         		# Adicionar as chaves para remoção
 				chaves_para_remover.update([codigo_key, descricao_key, key])
 
+		#info(f"chaves para remover:\n{chaves_para_remover}")
+		
 		# Remover as chaves identificadas
 		for key in chaves_para_remover:
 			dados.pop(key, None)
 
 		# Criar uma nova lista de dicionários com os dados filtrados
 		rubricas = [{k: v} for k, v in dados.items() if k.startswith("codigo_") or k.startswith("descricao_") or k.startswith("tipo_")]
-		
+		#info(f"rubricas:\n{rubricas}")
+
 		# Armazenar os dados na sessão
-		request.session['resultado'] = resultado
+		request.session['campos'] = itens_formulario_dict
 		request.session['varios_cpf_ativo'] = varios_cpf_ativo
 		request.session['varios_cpf_pensionista'] = varios_cpf_pensionista
 		request.session['rubricas'] = rubricas		
@@ -451,9 +455,51 @@ def calculo317(request):
 			'form':form,
 			'teste':teste})
 
+
+
+
+def resultado317(request):
+	# Recuperar os dados da sessão
+	resultado = request.session.get('campos', 'Nenhum resultado disponível.')
+	lista_ativo = []
+	lista_pensionista = []
+
+	for item in resultado:
+		for key, value in item.items():
+			if key == "varios_cpf_ativo":
+				lista_ativo = value.splitlines()  # Quebra em lista, removendo linhas vazias
+			elif key == "varios_cpf_pensionista":
+				lista_pensionista = value.splitlines()
+
+	# Limpar espaços extras e remover linhas vazias
+	lista_ativo = [cpf.strip() for cpf in lista_ativo if cpf.strip()]
+	lista_pensionista = [cpf.strip() for cpf in lista_pensionista if cpf.strip()]
+
+	# Exibir os resultados
+	info("Ativos/Aposentados:", lista_ativo)
+	info("Pensionistas:", lista_pensionista)
+
+
+	#cpf_ativos = request.session.get('varios_cpf_ativo', '')
+	#cpf_pensionistas = request.session.get('varios_cpf_pensionista')
+	#info(f'ativos:\n{cpf_ativos}')
+	#info(f'pensionistas:\n{cpf_pensionistas}')
+	
+	return render(request, 'resultado317.html', {'resultado': resultado})
+
+
 # ['zr7mO0gJwdohzTBmZBp8y9CRC2AZwybVvYLeDbeSNIldgZvy0i3wa95ToOKLSjon', '2025-03-06', 
 # '2025-03-07', '2025-03-08', '2025-03-10', '2025-03-11', 'Tabela c.m. cond. geral IPCA-E', 
 # 'Juros 0,5% até junho de 2009', 'on']
+
+
+
+
+
+
+
+
+
 
 def indices(request):
 	if request.method == 'POST':
