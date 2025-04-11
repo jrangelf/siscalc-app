@@ -46,12 +46,21 @@ class TabelasSerpro:
          # separa o dataframe do período de cálculo
          df_calculo = df_base[(df_base['datapagto'] >= data_inicio_calculo) & (df_base['datapagto'] <= data_final_calculo)]
       
-         # Eliminando as linhas onde todos os valores são zero (exceto a primeira coluna da data)
-         #df_pagamentos = df_pagtos[~(df_pagtos.iloc[:, 1:] == 0).all(axis=1)]
+         # if df_pagtos:
+         #     df_pagamentos = df_pagtos[(df_pagtos.iloc[:, 1:] != 0).any(axis=1)]
+         #     info(f"\n\nacd_serpro_calculo\n[     DF_PAGTOS    ]\n\n\n{df_pagtos}")
+         # else:
+         #     df_pagamentos = None
 
-         df_pagamentos = df_pagtos[(df_pagtos.iloc[:, 1:] != 0).any(axis=1)]
-      
-         info(f"\n\nacd_serpro_calculo\n[     DF_PAGTOS    ]\n\n\n{df_pagtos}")
+         if isinstance(df_pagtos, pd.DataFrame) and not df_pagtos.empty:
+            # Remove linhas onde todas as colunas (exceto a primeira) são zero
+            df_pagamentos = df_pagtos[(df_pagtos.iloc[:, 1:] != 0).any(axis=1)]
+            
+            # Log das informações do DataFrame original para depuração
+            #info(f"\n\nacd_serpro_calculo\n[     DF_PAGTOS    ]\n\n\n{df_pagtos}")
+         else:
+            df_pagamentos = None
+
          
          #check if any value in the specified columns is non-zero. This approach is conceptually equivalent but avoids using the ~ operator.
          #df_pagamentos = df_pagtos[(df_pagtos.iloc[:, 1:] != 0).any(axis=1)] # mais conciso e eficiente

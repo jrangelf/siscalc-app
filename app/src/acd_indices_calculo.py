@@ -16,7 +16,7 @@ class Tabelas:
                  aplicar_selic: bool,
                  aplicar_selic_juros: bool):
         
-        info(f"DATA FINAL PERIODO: {data_final_periodo}")
+        # info(f"DATA FINAL PERIODO: {data_final_periodo}")
         """
         Construtor da classe IamJuros.
 
@@ -117,11 +117,11 @@ class Tabelas:
         try:
             indice_df = self.indice()
             juros_df = self.juros()
-            info(f"\nacd_indices_calculo\n[** JUROS **]\n{juros_df}")
-            info(f"\nacd_indices_calculo\n[** INDICE **]\n{indice_df}")
+            # info(f"\nacd_indices_calculo\n[** JUROS **]\n{juros_df}")
+            # info(f"\nacd_indices_calculo\n[** INDICE **]\n{indice_df}")
             if self.aplicar_selic:
                 selic_df = self.selic()
-                info(f"\nacd_indices_calculo\n[** SELIC **]\n{selic_df}")
+                # info(f"\nacd_indices_calculo\n[** SELIC **]\n{selic_df}")
                 parte = pd.merge(indice_df, juros_df, on='data', how='inner')
                 sufixo = pd.merge(parte, selic_df, on='data', how='inner')                
             else:

@@ -50,7 +50,7 @@ class DateTools:
         """ Converte a string 2025-07-01 na string 01/07/2025 """
         partes = data.split("-")
         data_formatada = str(f"{partes[2]}/{partes[1]}/{partes[0]}")
-        info(f'data: {data_formatada}')
+        #info(f'data: {data_formatada}')
         return data_formatada #f"{partes[2]}/{partes[1]}/{partes[0]}"
 
     

@@ -27,7 +27,7 @@ class ApiIndice:
         lista = []        
         for i in data:  
             lista.append([i['codigo'], i['nome'], i['descricao']])
-        info(f'lista:\n{lista}')
+        #info(f'lista:\n{lista}')
         return lista
         
     

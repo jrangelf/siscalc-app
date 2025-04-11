@@ -98,10 +98,44 @@ class MatrizSerpro:
         df_final = df_pivot.reset_index()
 		
 		# separar a matriz base de pagtos, retira a coluna datapagto e as colunas da base calculo pagtos
-        colunas_base_pagtos = [coluna for coluna in basepagtos if coluna in df_final]		
-        df2 = df_final[['datapagto'] + colunas_base_pagtos]
-        df2 = df2.fillna(0)
-        df2['datapagto'] = DateTools.converter_data_serie_ano_mes_datetime(df2, 'datapagto')		
+        colunas_base_pagtos = [coluna for coluna in basepagtos if coluna in df_final]
+        
+        if colunas_base_pagtos:
+            df2 = df_final[['datapagto'] + colunas_base_pagtos]
+            df2 = df2.fillna(0)
+            df2['datapagto'] = DateTools.converter_data_serie_ano_mes_datetime(df2, 'datapagto')
+            #info(f"DF2:\n\n{df2}")
+        else:
+            df2 = None
+
+# # Verifica se colunas_base_pagtos é uma lista não vazia
+# if isinstance(colunas_base_pagtos, list) and colunas_base_pagtos:
+#     # Verifica se df_final existe e contém as colunas necessárias
+#     if 'datapagto' in df_final.columns and all(col in df_final.columns for col in colunas_base_pagtos):
+#         # Seleciona as colunas desejadas
+#         df_selecionado = df_final[['datapagto'] + colunas_base_pagtos]
+        
+#         # Preenche valores NaN com 0
+#         df_selecionado = df_selecionado.fillna(0)
+        
+#         try:
+#             # Converte a coluna 'datapagto' para datetime
+#             df_selecionado['datapagto'] = DateTools.converter_data_serie_ano_mes_datetime(df_selecionado, 'datapagto')
+#         except Exception as e:
+#             info(f"Erro ao converter a coluna 'datapagto': {e}")
+#             df_selecionado = None
+        
+#         # Log das informações do DataFrame resultante
+#         if df_selecionado is not None:
+#             info(f"DF_SELECIONADO:\n\n{df_selecionado}")
+#     else:
+#         # Caso df_final não contenha as colunas necessárias
+#         info("O DataFrame 'df_final' não contém as colunas necessárias.")
+#         df_selecionado = None
+# else:
+#     # Caso colunas_base_pagtos seja inválida ou vazia
+#     info("A lista 'colunas_base_pagtos' está vazia ou não é válida.")
+#     df_selecionado = None		
 
 		# separar a matriz base de cálculo
         colunas_base_calculo = [coluna for coluna in df_final.columns if coluna not in basepagtos]

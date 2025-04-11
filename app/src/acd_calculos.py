@@ -10,6 +10,8 @@ from src.acd_datetools import *
 from src.api_indice import *
 from src.acd_utils import *
 
+from src.acd_dataframes import DataframeAjustes
+
 import pandas as pd
 
 
@@ -61,8 +63,7 @@ class Calculos:
     def calcular_317(cls,
                      dict_formularios,
                      ativos,
-                     pensionistas):     
-     
+                     pensionistas):
 
         campos, rubricas = Utils.extrair_campos(dict_formularios, primeiros=19, ultimos=9)
         #info(f"[   campos   ]\n{campos}")
@@ -70,26 +71,20 @@ class Calculos:
 
         anoinipagto = campos.get('anoinipagto','2002')
         anofimpagto = campos.get('anofimpagto','2009')        
-        
         anoInicio = int(campos.get('termoinicial', '1993-01-01').split('-')[0])        
         anoFinal = int(anofimpagto)
-        basecalculo, basepagtos = Utils.separar_codigos_rubricas_por_tipo(rubricas)
-        
+        basecalculo, basepagtos = Utils.separar_codigos_rubricas_por_tipo(rubricas)        
         termoInicial = campos.get('termoinicial')
         termoInicial = DateTools.converter_ano_mes_dia_para_string(termoInicial)                       
         termoFinal = campos.get('termofinal')
         termoFinal = DateTools.converter_ano_mes_dia_para_string(termoFinal)
         termoFinalExtendido = '31/12/'+str(anoFinal)
-        info(f"TERMO FINAL EXTENDIDO:{termoFinalExtendido}")
-
         dataCitacao = campos.get('dtcitacao')
         dataCitacao = DateTools.converter_ano_mes_dia_para_string(dataCitacao)                         
         dataAtualizacao = campos.get('dtatualizacao')
         dataAtualizacao = DateTools.converter_ano_mes_dia_para_string(dataAtualizacao)        
         percentual = campos.get('pagamento')
-
-        orgao = campos.get('orgao', None) # não existe ainda esse campo
-        
+        orgao = campos.get('orgao', None)        
         tabpnep = campos.get('tabpnep')
         tabjuros = campos.get('tabjuros')
         verificarObito = campos.get('verificarObito')
@@ -98,54 +93,52 @@ class Calculos:
         aplicarSELIC = {'on': True, 'off': False}.get(aplicarSELIC, None)
         selicJuros = campos.get('selicJuros')
         selicJuros = {'on': True, 'off': False}.get(selicJuros, None)
-
         lista_tabelas = ApiIndice.get_cod_nome_desc_das_tabelas()
         tabela_pnep = Utils.obter_codigo_por_descricao(lista_tabelas, tabpnep)
         tabela_juros = Utils.obter_codigo_por_descricao(lista_tabelas, tabjuros)
   
-
           
+        # info(f"[   campos   ]\n{campos}")
+        # info(f"[   rubricas   ]\n{rubricas}")
+        # info(f"TERMO FINAL EXTENDIDO:{termoFinalExtendido}")
+        # info(f"anoInicio:       {anoInicio}")
+        # info(f"anoFinal:        {anoFinal}")
+        # info(f"basecalculo:     {basecalculo}")
+        # info(f"basepagtos:      {basepagtos}")
+        # info(f"termoInicial:    {termoInicial}")
+        # info(f"termoFinal:      {termoFinal}")
+        # info(f"dataCitacao:     {dataCitacao}")
+        # info(f"dataAtualizacao: {dataAtualizacao}")
+        # info(f"percentual:      {percentual}")
+        # info(f"anoinipagto:     {anoinipagto}")
+        # info(f"anofimpagto:     {anofimpagto}")
+        # info(f"orgao:{orgao}")
+        # #info(f"tabpnep:{tabpnep}")
+        # #info(f"tabjuros:{tabjuros}")
 
-
-        info(f"anoInicio:       {anoInicio}")
-        info(f"anoFinal:        {anoFinal}")
-        info(f"basecalculo:     {basecalculo}")
-        info(f"basepagtos:      {basepagtos}")
-        info(f"termoInicial:    {termoInicial}")
-        info(f"termoFinal:      {termoFinal}")
-        info(f"dataCitacao:     {dataCitacao}")
-        info(f"dataAtualizacao: {dataAtualizacao}")
-        info(f"percentual:      {percentual}")
-        info(f"anoinipagto:     {anoinipagto}")
-        info(f"anofimpagto:     {anofimpagto}")
-        #info(f"orgao:{orgao}")
-        #info(f"tabpnep:{tabpnep}")
-        #info(f"tabjuros:{tabjuros}")
-
-        info(f"verificarObito:  {verificarObito}")
-        info(f"aplicarSELIC:    {aplicarSELIC}")
-        info(f"selicJuros:      {selicJuros}")
-        
-        info(f"tabela_pnep:     {tabela_pnep}")
-        info(f"tabela_juros:    {tabela_juros}")
+        # info(f"verificarObito:  {verificarObito}")
+        # info(f"aplicarSELIC:    {aplicarSELIC}")
+        # info(f"selicJuros:      {selicJuros}")        
+        # info(f"tabela_pnep:     {tabela_pnep}")
+        # info(f"tabela_juros:    {tabela_juros}")
         
         
         
         
         
         # dados usados para teste:
-        cpf = '24733830904' # luis carlos de assuncao
+        #cpf = '24733830904' # luis carlos de assuncao
         cpf = '48662267653'
+        #cpf = '19459696449'
   
 
-        # ajustar o termoFinal para o ano final do pagto administrativo                
-        #tabela = Tabelas(tabela_juros, tabela_pnep, dataCitacao, dataAtualizacao, termoInicial, termoFinal, aplicarSELIC, selicJuros)
+        
         tabela = Tabelas(tabela_juros, tabela_pnep, dataCitacao, dataAtualizacao, termoInicial, termoFinalExtendido, aplicarSELIC, selicJuros)
         sufixo = tabela.sufixo()
 
         pd.set_option('display.max_rows', None)
         pd.set_option('display.max_columns', None)
-        pd.set_option("display.float_format", "{:.4f}".format)
+        pd.set_option("display.float_format", "{:.2f}".format)
 
         calculador = CalculoSerpro317(anoInicio,
                                       anoFinal,
@@ -158,21 +151,19 @@ class Calculos:
                                       percentual,
                                       orgao)
 
-        #resultado = calculador.tabela_para_cpf(cpf)        
         basecalculo, basepagtos, rubricas = calculador.tabela_para_cpf(cpf)
 
-        #info(f"{type(resultado)}")
-        info(f"\nacd_calculos\n[       BASE CÁLCULO      ]\n\n{basecalculo}")
+        basepagtos_sufixo = DataframeAjustes.ajustar_df_basepagtos(basepagtos=basepagtos, 
+                                                                   sufixo=sufixo, 
+                                                                   aplicarSELIC=aplicarSELIC,
+                                                                   selicJuros=selicJuros, 
+                                                                   percentual=percentual)
         
-        info(f"\nacd_calculos\n[       PAGAMENTOS ADM      ]\n\n{basepagtos}")
-
-        #info(f"\n\n[       RUBRICAS CABEÇALHO      ]\n\n{rubricas}")
-
-        info(f"\nacd_calculos\n[       SUFIXO      ]\n\n{sufixo}")
-
-
-
-
+        basecalculo_sufixo = DataframeAjustes.ajustar_df_basecalculo(basecalculo=basecalculo, 
+                                                                    sufixo=sufixo, 
+                                                                    aplicarSELIC=aplicarSELIC,
+                                                                    selicJuros=selicJuros)
+        
 
         return    
 
