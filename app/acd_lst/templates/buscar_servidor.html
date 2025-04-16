@@ -1,0 +1,67 @@
+{% extends 'cabecalho1.html' %}
+
+{% block title %}Listar Servidor{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <h2 class="mb-4">Listar Servidor por Nome</h2>
+
+    <form method="post" class="mb-4" >
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="nome">Digite um ou mais nomes (um por linha):</label>
+            <textarea name="nome" id="nome" class="form-control" rows="5" placeholder="Ex: ANTONIO SILVA">{{ request.POST.nome }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Buscar</button>
+    </form>
+
+    {% if nomes_com_quantidade %}
+        <div class="alert alert-secondary">
+            <strong>Nomes buscados:</strong>
+            <ul class="mb-0">
+                {% for nome, quantidade in nomes_com_quantidade %}
+                    <li>{{ nome }} ({{ quantidade }})</li>
+                {% endfor %}                
+            </ul>
+        </div>
+    {% endif %}
+
+    {% if resultados %}
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Resultados ({{ quantidade }} encontrados)</h5>
+            <div>
+                <a href="{% url 'exportar_csv' %}" class="btn btn-outline-secondary btn-sm mr-2">Exportar CSV</a>
+                <a href="{% url 'exportar_excel' %}" class="btn btn-outline-success btn-sm">Exportar Excel</a>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body p-0">
+                <table class="table table-bordered table-striped mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Nome</th>
+                            <th>CPF</th>
+                            <th>Identificação Única</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in resultados %}
+                            <tr>
+                                <td>{{ item.nome }}</td>
+                                <td>{{ item.CPF }}</td>
+                                <td>{{ item.identificacaoUnica }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% elif request.method == 'POST' %}
+        <div class="alert alert-warning">
+            Nenhum resultado encontrado.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

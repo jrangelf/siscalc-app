@@ -52,6 +52,14 @@ class ApiSerpro():
         url = f'{cls.base_url}datadeobito/{cpf}'         
         data = get_api(url)
         return data
+    
+    
+    @classmethod
+    def listar_servidor_nome(cls, nome:str):
+        url = f'{cls.base_url}pesquisarservidor/{nome}'
+        data = get_api(url)
+        return data
+
 
 
 

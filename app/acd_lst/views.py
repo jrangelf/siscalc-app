@@ -5,7 +5,8 @@ from django.template.loader import get_template
 
 #from weasyprint import HTML
 
-
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
 
 
 from re import S
@@ -187,7 +188,76 @@ def resumo(request):
 		print('via get')
 		return render(request, 'resumo.html', {'x':x})	
 
- 	
+#----------LISTAR SERVIDOR
+
+# Armazena resultados temporários para exportar CSV
+ULTIMOS_RESULTADOS = []
+def buscar_servidor_nome(request):
+	resultado = []
+	nomes_buscados = []
+	nomes_com_quantidade = []
+	
+	if request.method == "POST":
+		nomes_input = request.POST.get('nome')
+		nomes_buscados = [n.strip().upper() for n in nomes_input.split('\n') if n.strip()]
+        # for nome in nomes_buscados:
+        #     resultado.extend(ApiSerpro.listar_servidor_nome(nome))
+		for nome in nomes_buscados:
+			encontrados = ApiSerpro.listar_servidor_nome(nome)
+			resultado.extend(encontrados)
+			nomes_com_quantidade.append((nome, len(encontrados)))		
+		global ULTIMOS_RESULTADOS
+		ULTIMOS_RESULTADOS = resultado  # guarda resultado para exportação
+	return render(request, 'buscar_servidor.html', {
+        'resultados': resultado,        
+        'quantidade': len(resultado),
+		'nomes_com_quantidade': nomes_com_quantidade
+    })
+
+def exportar_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="servidores.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['Nome', 'CPF', 'IdentificacaoUnica'])
+    for item in ULTIMOS_RESULTADOS:
+        writer.writerow([item['nome'], item['CPF'], item['identificacaoUnica']])
+    return response
+
+
+def exportar_excel(request):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Servidores"
+
+    # Cabeçalhos
+    headers = ['Nome', 'CPF', 'IdentificacaoUnica']
+    ws.append(headers)
+
+    for item in ULTIMOS_RESULTADOS:
+        ws.append([item['nome'], item['CPF'], item['identificacaoUnica']])
+
+    # Ajusta largura automática das colunas
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        ws.column_dimensions[column].width = max_length + 2
+
+    # Cria a resposta HTTP
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = 'attachment; filename=servidores.xlsx'
+    wb.save(response)
+    return response
+
+
+
 
 #----------------------------------------------------------------------------------------------------------------------
 #####   #####      #####    #####

@@ -32,6 +32,9 @@ urlpatterns = [
     path('resultado2886/', views.resultado2886, name='resultado2886'),
     path('indices/', views.indices, name='indices'), 
     path('resumo/', views.resumo, name='resumo'),
-    path('exportar-pdf/', views.exportar_pdf, name='exportar_pdf'),    
+    path('exportar-pdf/', views.exportar_pdf, name='exportar_pdf'),
+    path('buscar_servidor/', views.buscar_servidor_nome, name='buscar_servidor_nome'),
+    path('exportar_csv/', views.exportar_csv, name='exportar_csv'),
+    path('exportar_excel/', views.exportar_excel, name='exportar_excel'),    
  
 ]

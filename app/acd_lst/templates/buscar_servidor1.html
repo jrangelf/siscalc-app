@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Buscar Servidor</title>
+</head>
+<body>
+    <h1>Buscar Servidor por Nome</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        <label>Digite um ou mais nomes (1 por linha):</label><br>
+        <textarea name="nome" rows="5" cols="40">{{ request.POST.nome }}</textarea><br><br>
+        <button type="submit">Buscar</button>
+    </form>
+
+    {% if nomes_buscados %}
+        <h2>Resultados para:</h2>
+        <ul>
+            {% for nome in nomes_buscados %}
+                <li><strong>{{ nome }}</strong></li>
+            {% endfor %}
+        </ul>
+        <p><strong>Total de registros encontrados:</strong> {{ quantidade }}</p>
+
+        <hr>
+        {% for item in resultados %}
+            <div>
+                <p><strong>{{ item.nome }}</strong></p>
+                <p>CPF: {{ item.CPF }}</p>
+                <p>IU: {{ item.identificacaoUnica }}</p>
+                <hr>
+            </div>
+        {% endfor %}
+
+        <!--{% if resultados %}
+            <a href="{% url 'exportar_csv' %}"><button>Exportar CSV</button></a>
+        {% endif %}
+        -->
+        {% if resultados %}
+            <div style="margin-top: 20px;">
+                <a href="{% url 'exportar_csv' %}">
+                    <button>Exportar CSV</button>
+                </a>
+
+                <a href="{% url 'exportar_excel' %}">
+                    <button>Exportar Excel</button>
+                </a>
+            </div>
+        {% endif %}
+
+
+
+    {% endif %}
+</body>
+</html>
