@@ -1,3 +1,13 @@
+from django.core.paginator import Paginator
+from django.shortcuts import render
+from django.http import HttpResponse
+from django.template.loader import get_template
+
+#from weasyprint import HTML
+
+
+
+
 from re import S
 from .forms import ObitoForm, RubricasForm, ListForm, UploadFileForm, List
 from datetime import datetime
@@ -372,6 +382,18 @@ def resultado2886(request):
 			####  #  ##  ##  
 
 #----------------------------------------------------------------------------------------------------------------------
+def exportar_pdf(request):
+	df_calculo317 = request.session.get('calculo', '')
+    #df_calculo317 = ...  # os dados transformados
+	template = get_template('relatorio.html')
+	html = template.render({'page_obj': df_calculo317})
+	response = HttpResponse(content_type='application/pdf')
+	response['Content-Disposition'] = 'filename="relatorio.pdf"'
+
+    #HTML(string=html).write_pdf(response)
+	return response
+
+
 def calculo317(request):
 	if request.method == "POST":
 		
@@ -383,16 +405,33 @@ def calculo317(request):
 		varios_cpf_pensionista = request.POST.get('varios_cpf_pensionista', '')
 		
 		df_calculo317 = Calculos.calcular_317(itens_formulario_dict, varios_cpf_ativo, varios_cpf_pensionista)
+				
+		
+		# Convertendo a coluna 'MÊS/ANO' para string
+		df_calculo317_transformado = {}
+		totais = {}
 
-		
-		
-		
-		# Exibir os resultados
-		#info(f"calculo317:Ativos/Aposentados:\n{varios_cpf_ativo}")
-		#info(f"calculo317:Pensionistas:\n{varios_cpf_pensionista}")		
+		for chave, valor in df_calculo317.items():
+			# Convertendo Timestamps para strings
+			valor['pagamentos']['MESANO'] = valor['pagamentos']['MESANO'].astype(str)
+			valor['calculo317']['MESANO'] = valor['calculo317']['MESANO'].astype(str)
 
-		#df_calculo317 = Calculos.calcular_317(dict_campos, varios_cpf_ativo, varios_cpf_pensionista)
-		#info(f"dicionario de campos:\n{itens_formulario_dict}")
+			# Convertendo DataFrames para dicionários
+			df_calculo317_transformado[chave] = {
+				'pagamentos': valor['pagamentos'].to_dict(orient='records'),
+				'calculo317': valor['calculo317'].to_dict(orient='records')
+			}
+
+			# Calculando totais
+			total_calculo = valor['calculo317']['TOTAL BRUTO'].sum()
+			total_pagamento = valor['pagamentos']['TOTAL BRUTO'].sum()
+
+			totais[chave] = {
+				'total_calculo': total_calculo,
+				'total_pagamento': total_pagamento
+			}
+
+		#info(f"totais:\ncalculo:{total_calculo}\npagamento:{total_pagamento}")	
 
 		
 		
@@ -427,7 +466,9 @@ def calculo317(request):
 		request.session['campos'] = itens_formulario_dict
 		request.session['varios_cpf_ativo'] = varios_cpf_ativo
 		request.session['varios_cpf_pensionista'] = varios_cpf_pensionista
-		request.session['rubricas'] = rubricas		
+		request.session['rubricas'] = rubricas
+		request.session['calculo'] = df_calculo317_transformado
+		request.session['totais'] = totais		
 		
 		return redirect('resultado317')
 	
@@ -460,7 +501,10 @@ def calculo317(request):
 
 def resultado317(request):
 	# Recuperar os dados da sessão
-	resultado = request.session.get('campos', 'Nenhum resultado disponível.')
+	resultado = request.session.get('campos', 'Nenhum resultado disponível.')	
+	calculo = request.session.get('calculo', '')
+	totais = request.session.get('totais', '')
+	
 	lista_ativo = []
 	lista_pensionista = []
 
@@ -475,17 +519,10 @@ def resultado317(request):
 	lista_ativo = [cpf.strip() for cpf in lista_ativo if cpf.strip()]
 	lista_pensionista = [cpf.strip() for cpf in lista_pensionista if cpf.strip()]
 
-	# Exibir os resultados
-	info("Ativos/Aposentados:", lista_ativo)
-	info("Pensionistas:", lista_pensionista)
 
 
-	#cpf_ativos = request.session.get('varios_cpf_ativo', '')
-	#cpf_pensionistas = request.session.get('varios_cpf_pensionista')
-	#info(f'ativos:\n{cpf_ativos}')
-	#info(f'pensionistas:\n{cpf_pensionistas}')
 	
-	return render(request, 'resultado317.html', {'resultado': resultado})
+	return render(request, 'resultado317.html', {'calculo': calculo})
 
 
 # ['zr7mO0gJwdohzTBmZBp8y9CRC2AZwybVvYLeDbeSNIldgZvy0i3wa95ToOKLSjon', '2025-03-06', 

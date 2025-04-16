@@ -9,6 +9,7 @@ class TabelasSerpro:
 
 
       @classmethod
+      #async def tabelaTresDezessete (cls,
       def tabelaTresDezessete (cls, 
                                cpf: str, 
                                anoi: int, 
@@ -24,6 +25,7 @@ class TabelasSerpro:
                                pensionista: bool = False) -> Tuple [pd.DataFrame, pd.DataFrame, List]:      
          
          if pensionista:
+            #df_base, df_pagtos, rubricas_cabecalho = await MatrizSerpro.matriz_tresdezessete_pensionista(cpf,
             df_base, df_pagtos, rubricas_cabecalho = MatrizSerpro.matriz_tresdezessete_pensionista(cpf,
                                                                                                    anoi,
                                                                                                    anof,
@@ -32,6 +34,7 @@ class TabelasSerpro:
                                                                                                    termo_inicial,
                                                                                                    orgao)
          else:
+             #df_base, df_pagtos, rubricas_cabecalho = await MatrizSerpro.matriz_tresdezessete(cpf,
              df_base, df_pagtos, rubricas_cabecalho = MatrizSerpro.matriz_tresdezessete(cpf,
                                                                                         anoi,
                                                                                         anof,

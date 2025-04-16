@@ -9,6 +9,7 @@ from src.api_serpro import ApiSerpro
 class MatrizSerpro:
     
     @classmethod
+    #async def matriz_tresdezessete(cls,
     def matriz_tresdezessete(cls,
                             cpf: str,
                             anoi: int,
@@ -18,7 +19,10 @@ class MatrizSerpro:
                             termo_inicial: str,
                             orgao: Optional[int]= None) -> Tuple [pd.DataFrame, pd.DataFrame, List]:
       
+      #extracao = await cls.obter_rubricas(cpf, anoi, anof, orgao)
       extracao = cls.obter_rubricas(cpf, anoi, anof, orgao)
+      dados_cadastrais = cls.obter_dados_cadastrais(cpf)
+      
       unicas = Utils.obter_codigos_rubricas_ficha(extracao)
       
       # retirar apenas as que estão na base de cálculo para compor o cabeçalho
@@ -37,9 +41,9 @@ class MatrizSerpro:
       chaves = ['datapagto', 'codrubrica', 'valor']
       rendimentos = Utils.filtrar_dados_lista_dicionarios(extracao, chaves, 'rendimento', 1)
       df_base, df_pagtos = cls.montar_dataframe_rendimentos(rubricas_cabecalho, 
-                                                                    rendimentos,
-                                                                    basepagamentos,
-                                                                    termo_inicial)
+                                                            rendimentos,
+                                                            basepagamentos,
+                                                            termo_inicial)
       return df_base, df_pagtos, rubricas_com_descricao
    
 
@@ -57,18 +61,30 @@ class MatrizSerpro:
     
     
     @classmethod
+    #async def obter_rubricas(cls,
     def obter_rubricas(cls,
-                         cpf: str,
-                         anoi: int,
-                         anof: int,
-                         orgao: Optional[int] = None) -> List[Dict]:
+                       cpf: str,
+                       anoi: int,
+                       anof: int,
+                       orgao: Optional[int] = None) -> List[Dict]:
 		
         """ extrai rubricas da API e filtra por órgão, se fornecido """
-        extracao = ApiSerpro.get_extrair_rubricas(cpf, anoi, anof)
-		
+        #extracao = await ApiSerpro.get_extrair_rubricas(cpf, anoi, anof)
+        extracao = ApiSerpro.get_extrair_rubricas(cpf, anoi, anof)		
         if orgao is not None:
             extracao = [item for item in extracao if item.get('codorgao') == orgao]
         return extracao
+
+    @classmethod
+    def obter_dados_cadastrais(cls,
+                               cpf:str, 
+                               orgao:Optional[int] = None):
+        _cpf, iu, nome = ApiSerpro.pesquisar_nome_iu(cpf)
+        data_obito = ApiSerpro.obter_data_obito_api(cpf)['data_de_obito']
+        info(f"\nnome: {nome}\niu: {iu}\ndata_obito: {data_obito}\n")
+        
+        
+        return nome, iu, data_obito
 
 
     @classmethod

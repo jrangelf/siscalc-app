@@ -1,50 +1,95 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resultado 317</title>
+    <title>Relatório</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
 </head>
-<body>
+<body class="p-3">
+    <div class="container-fluid">
+        {% for cpf, dados in calculo.items %}
+            <div class="mb-4">
+                <h2 class="h4 text-primary">CPF: {{ cpf }}</h2>
 
-    {% for i in resultado|slice:":19" %}
-        {% for chave, valor in i.items %}
-            <p>{{ chave }}: {{ valor }}</p>
+
+                <h3 class="h5 text-secondary mt-3">Cálculo 317:</h3>
+                <table class="table table-striped table-sm">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>MÊS/ANO</th>
+                            {% with dados.calculo317.0 as primeira_linha %}
+                                {% for key in primeira_linha.keys %}
+                                    {% if key != "MESANO" %}
+                                        <th>{{ key }}</th>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endwith %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for linha in dados.calculo317 %}
+                            <tr>
+                                <td>{{ linha.MESANO }}</td>
+                                {% for key, valor in linha.items %}
+                                    {% if key != "MESANO" %}
+                                    <td>
+                                        {% if valor is None %}                                       
+                                        {% elif key == "IAM" %}
+                                            {{ valor|floatformat:4 }}  <!-- 4 casas decimais para IAM -->
+                                        {% else %}
+                                            {{ valor|floatformat:2 }}  <!-- 2 casas para outros -->
+                                        {% endif %}
+                                    </td>
+                                        <!-- <td>{{ valor }}</td> -->
+                                    {% endif %}
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <h3 class="h5 text-secondary mt-3">Pagamentos:</h3>
+                <table class="table table-striped table-sm">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>MÊS/ANO</th>
+                            {% with dados.pagamentos.0 as primeira_linha %}
+                                {% for key in primeira_linha.keys %}
+                                    {% if key != "MESANO" %}
+                                        <th>{{ key }}</th>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endwith %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for linha in dados.pagamentos %}
+                            <tr>
+                                <td>{{ linha.MESANO }}</td>
+                                {% for key, valor in linha.items %}
+                                    {% if key != "MESANO" %}
+                                    <td>
+                                        {% if valor is None %}                                       
+                                        {% elif key == "IAM" %}
+                                            {{ valor|floatformat:4 }}  <!-- 4 casas decimais para IAM -->
+                                        {% else %}
+                                            {{ valor|floatformat:2 }}  <!-- 2 casas para outros -->
+                                        {% endif %}
+                                    </td>
+                                        <!-- <td>{{ valor }}</td> -->
+                                    {% endif %}
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         {% endfor %}
-    {% endfor %}
+    </div>
 
-    {% for i in resultado|slice:"-9:" %}
-        {% for chave, valor in i.items %}
-            <p>{{ chave }}: {{ valor }}</p>
-        {% endfor %}
-    {% endfor %}
-
-
-<!--
-
-    {% for item in resultado %}
-        {% if 'dtatualizacao' in item %}
-            <p>Data de Atualização: {{ item.dtatualizacao }}</p>
-        {% endif %}
-    {% endfor %}
-    <hr>
-
-
-    {% for i in resultado %}
-        {% for chave, valor in i.items %}
-            <p>{{ chave }}: {{ valor }}</p>
-        {% endfor %}
-    {% endfor %}
--->
-</body>
-
-
-<!--
-<body>
-    <p>resultado.dtatualizacao</p>
-    {% for i in resultado %}
-    <p>{{i}}</p>
-    {% endfor %}
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 </body>
 </html>
--->

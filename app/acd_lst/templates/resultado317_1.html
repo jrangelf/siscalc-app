@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado 317</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+</head>
+
+
+<body class="bg-light">
+
+    <div class="container my-5">
+        <h1 class="mb-4 text-center">Relatório de Cálculo 317</h1>
+    
+        {% for cpf, dados in calculo.items %}
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">CPF: {{ cpf }}</h5>
+            </div>
+            <div class="card-body">
+    
+                <!-- Tabela de Cálculo 317 -->
+                <h6 class="text-secondary">Cálculo 317</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-striped">
+                        <thead class="thead-light">
+                            <tr>
+                                {% for key in dados.calculo317.0.keys %}
+                                <th>{{ key }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for linha in dados.calculo317 %}
+                            <tr>
+                                {% for valor in linha.values %}
+                                <td>{{ valor }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+    
+                <!-- Tabela de Pagamentos -->
+                <h6 class="text-secondary mt-4">Pagamentos</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-striped">
+                        <thead class="thead-light">
+                            <tr>
+                                {% for key in dados.pagamentos.0.keys %}
+                                <th>{{ key }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for linha in dados.pagamentos %}
+                            <tr>
+                                {% for valor in linha.values %}
+                                <td>{{ valor }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+    
+            </div> <!-- card-body -->
+        </div> <!-- card -->
+        {% endfor %}
+    </div> <!-- container -->
+    
+    </body>
+</html>
+
+
+
+
+<!--
+
+<body>
+
+    {% for i in resultado|slice:":19" %}
+        {% for chave, valor in i.items %}
+            <p>{{ chave }}: {{ valor }}</p>
+        {% endfor %}
+    {% endfor %}
+
+    {% for i in resultado|slice:"-9:" %}
+        {% for chave, valor in i.items %}
+            <p>{{ chave }}: {{ valor }}</p>
+        {% endfor %}
+    {% endfor %}
+
+
+
+
+    {% for item in resultado %}
+        {% if 'dtatualizacao' in item %}
+            <p>Data de Atualização: {{ item.dtatualizacao }}</p>
+        {% endif %}
+    {% endfor %}
+    <hr>
+
+
+    {% for i in resultado %}
+        {% for chave, valor in i.items %}
+            <p>{{ chave }}: {{ valor }}</p>
+        {% endfor %}
+    {% endfor %}
+-->
+
+
+
+<!--
+<body>
+    <p>resultado.dtatualizacao</p>
+    {% for i in resultado %}
+    <p>{{i}}</p>
+    {% endfor %}
+</body>
+
+-->

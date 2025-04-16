@@ -39,8 +39,10 @@ class CalculoSerpro317:
         self.percentual = percentual
         self.orgao = orgao
 
+    #async def tabela_para_cpf(self, cpf: str, pensionista: bool = False) -> Tuple[pd.DataFrame, pd.DataFrame, List[str]]:
     def tabela_para_cpf(self, cpf: str, pensionista: bool = False) -> Tuple[pd.DataFrame, pd.DataFrame, List[str]]:
         """ Monta a tabela do cálculo apenas para o CPF informado. """
+        #return await TabelasSerpro.tabelaTresDezessete(
         return TabelasSerpro.tabelaTresDezessete(
             cpf=cpf,
             anoi=self.anoi,
@@ -60,6 +62,7 @@ class CalculoSerpro317:
 class Calculos:
 
     @classmethod
+    #async def calcular_317(cls,
     def calcular_317(cls,
                      dict_formularios,
                      ativos,
@@ -96,6 +99,13 @@ class Calculos:
         lista_tabelas = ApiIndice.get_cod_nome_desc_das_tabelas()
         tabela_pnep = Utils.obter_codigo_por_descricao(lista_tabelas, tabpnep)
         tabela_juros = Utils.obter_codigo_por_descricao(lista_tabelas, tabjuros)
+
+        varios_cpf_ativos = campos.get('varios_cpf_ativo', '')
+        varios_cpf_pensionistas = campos.get('varios_cpf_pensionista', '')
+        
+        cpfs_ativos = [cpf.strip() for cpf in varios_cpf_ativos.split('\n') if cpf.strip()]
+
+        info(f"cpf_ativos:\n{cpfs_ativos}")
   
           
         # info(f"[   campos   ]\n{campos}")
@@ -151,21 +161,82 @@ class Calculos:
                                       percentual,
                                       orgao)
 
-        basecalculo, basepagtos, rubricas = calculador.tabela_para_cpf(cpf)
+        # #basecalculo, basepagtos, rubricas = await calculador.tabela_para_cpf(cpf)
+        # basecalculo, basepagtos, rubricas = calculador.tabela_para_cpf(cpf)
 
-        basepagtos_sufixo = DataframeAjustes.ajustar_df_basepagtos(basepagtos=basepagtos, 
+
+        # basepagtos_sufixo = DataframeAjustes.ajustar_df_basepagtos(basepagtos=basepagtos, 
+        #                                                            sufixo=sufixo, 
+        #                                                            aplicarSELIC=aplicarSELIC,
+        #                                                            selicJuros=selicJuros, 
+        #                                                            percentual=percentual)
+        
+                
+        # basecalculo_sufixo = DataframeAjustes.ajustar_df_basecalculo(basecalculo=basecalculo, 
+        #                                                             sufixo=sufixo, 
+        #                                                             aplicarSELIC=aplicarSELIC,
+        #                                                             selicJuros=selicJuros)
+        
+
+        
+        # Executando para cada CPF
+        calculos = {}
+        nao_processados = {}
+        consolidado = {}
+
+        for cpf in cpfs_ativos:
+            try:
+                info(f"Calculando para CPF: {cpf}")
+                
+                #cabecalho_exequente = montar_cabecalho_ativo()
+                basecalculo, basepagtos, rubricas = calculador.tabela_para_cpf(cpf)
+                rubricas_dict = {chave: valor for item in rubricas for chave, valor in item.items()}
+
+                basepagtos_sufixo = DataframeAjustes.ajustar_df_basepagtos(basepagtos=basepagtos, 
                                                                    sufixo=sufixo, 
                                                                    aplicarSELIC=aplicarSELIC,
                                                                    selicJuros=selicJuros, 
                                                                    percentual=percentual)
+                #info(f"basepagtos:\n\n{basepagtos_sufixo['MESANO']}")
         
-        basecalculo_sufixo = DataframeAjustes.ajustar_df_basecalculo(basecalculo=basecalculo, 
-                                                                    sufixo=sufixo, 
-                                                                    aplicarSELIC=aplicarSELIC,
-                                                                    selicJuros=selicJuros)
-        
+                
+                basecalculo_sufixo = DataframeAjustes.ajustar_df_basecalculo(basecalculo=basecalculo, 
+                                                                            sufixo=sufixo, 
+                                                                            aplicarSELIC=aplicarSELIC,
+                                                                            selicJuros=selicJuros)
+                        
+                #info(f"basecalculo:\n\n{basecalculo_sufixo}")
+                basecalculo_sufixo['(%)'] = basecalculo_sufixo['(%)'] * 100
+                basecalculo_sufixo['TAXA SELIC A PARTIR DE DEZ/2021 (EC 113/2021)']= basecalculo_sufixo['TAXA SELIC A PARTIR DE DEZ/2021 (EC 113/2021)']* 100
+                basepagtos_sufixo['TAXA SELIC A PARTIR DE DEZ/2021 (EC 113/2021)']= basepagtos_sufixo['TAXA SELIC A PARTIR DE DEZ/2021 (EC 113/2021)'] *100 
+                # lista_cabecalho_basepagtos = basepagtos_sufixo.columns.tolist()
+                # #info(f'lista_cabeçalho_basepagtos:\n{lista_cabecalho_basepagtos}')
+                # #info(f'rubricas:\n{rubricas_dict}')
+                # basepagtos_sufixo_cabecalho = DataframeAjustes.adicionar_nova_linha_cabecalho(basepagtos_sufixo,
+                #                                                                               lista_cabecalho_basepagtos, 
+                #                                                                               rubricas_dict)
+                
+                # lista_cabecalho_basecalculo = list(basecalculo_sufixo.columns)
+                # #info(f'lista_cabeçalho_basecalculo:\n{lista_cabecalho_basecalculo}')
+                # basecalculo_sufixo_cabecalho = DataframeAjustes.adicionar_nova_linha_cabecalho(basecalculo_sufixo,
+                #                                                                                lista_cabecalho_basecalculo, 
+                #                                                                                rubricas_dict)
 
-        return    
+                calculos[cpf] = {                    
+                    'pagamentos': basepagtos_sufixo,    # Primeiro DataFrame
+                    'calculo317': basecalculo_sufixo   # Segundo DataFrame
+                                    
+                }
+                
+            except Exception as e:
+                info(f"Erro ao calcular para CPF {cpf}: {e}")
+                nao_processados[cpf] = None        
+
+        # info(f"nao calculados:{nao_processados}")
+        info(f"calculos:\n\n{calculos}")
+
+        
+        return calculos    
 
 # # Executando para cada CPF
 # resultados = {}

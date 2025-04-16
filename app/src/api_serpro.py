@@ -48,12 +48,22 @@ class ApiSerpro():
         return cpf, nome, iu    
     
     @classmethod
+    def obter_data_obito_api(cls, cpf:str):
+        url = f'{cls.base_url}datadeobito/{cpf}'         
+        data = get_api(url)
+        return data
+
+
+
+
+    @classmethod
     def extrair_ficha_financeira(cls, cpf: str, anoi: str, anof: str) -> list:
          url = f'{cls.base_url}fichafinanceira/{cpf}?anoinicial={anoi}&anofinal={anof}'
          data = get_api(url)
          cleaned_data = cls.remove_values_key(data)
-         return cleaned_data 
-    
+         return cleaned_data
+
+
     @classmethod
     def extrair_rubricas_api(cls, cpf: str, anoi: str, anof: str) -> dict:        
          url = f'{cls.base_url}rubricas/{cpf}?anoinicial={anoi}&anofinal={anof}'         
@@ -61,9 +71,8 @@ class ApiSerpro():
          return data
 
         
-    @classmethod
-    def obter_data_obito_api():
-        ...
+
+        
 
     @classmethod
     def obter_pensionistas():
