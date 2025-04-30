@@ -130,13 +130,47 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
-        // Exportação para Excel
+        // Exportação para Excel        
         function exportToExcel() {
-            const tabela = document.getElementById('tabelaDados');
-            const ws = XLSX.utils.table_to_sheet(tabela);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'IAM_Juros');
-            XLSX.writeFile(wb, 'IAM_Juros.xlsx');
+        const tabela = document.getElementById('tabelaDados');
+        const wb = XLSX.utils.book_new();
+        const ws_data = [];
+
+        // Cabeçalhos
+        const headers = Array.from(tabela.querySelectorAll('thead th')).map(th =>
+            th.textContent.trim()
+        );
+        ws_data.push(headers);
+
+        // Linhas
+        tabela.querySelectorAll('tbody tr').forEach(tr => {
+            const row = Array.from(tr.querySelectorAll('td')).map((td, index) => {
+                let text = td.textContent
+                    .replace(/[\u200B-\u200D\uFEFF]/g, '') // remove caracteres invisíveis (zero-width, etc.)
+                    .replace(/[\r\n\t]/g, '')             // remove \r, \n, \t
+                    .trim();                              // remove espaços extras
+
+                return text;
+            });
+            ws_data.push(row);
+        });
+
+        // Criar planilha com os dados como texto limpo
+        const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+        // Forçar tipo string para todas as células
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const cell_address = XLSX.utils.encode_cell({ r: R, c: C });
+                if (ws[cell_address]) {
+                    ws[cell_address].t = 's'; // força como string
+                }
+            }
+        }
+
+        XLSX.utils.book_append_sheet(wb, ws, 'IAM_Juros');
+        XLSX.writeFile(wb, 'IAM_Juros.xlsx');
         }
 
         // Exportação para CSV
