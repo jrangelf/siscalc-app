@@ -18,7 +18,7 @@ import pandas as pd
 class DataframeAjustes:
     
     @classmethod
-    def ajustar_df_basepagtos(cls, basepagtos, sufixo, aplicarSELIC, selicJuros, percentual):
+    def ajustar_df_basepagtos(cls, basepagtos, sufixo, aplicarSELIC, selicJuros, percentual, descricao):
         
         if not basepagtos.empty and not sufixo.empty:
             basepagtos['soma'] = basepagtos.iloc[:, 1:].sum(axis=1)            
@@ -36,43 +36,47 @@ class DataframeAjustes:
 
             # incluir as colunas adicionais após a inclusão do sufixo
             valor_percentual = int(percentual)/100
-            basepagtos_sufixo['percentual'] = valor_percentual
-            basepagtos_sufixo['valor_devido'] = basepagtos_sufixo['soma'] * basepagtos_sufixo['percentual']
-            basepagtos_sufixo['principal_atualizado'] = basepagtos_sufixo['valor_devido'] * basepagtos_sufixo['indice_correcao']
+            basepagtos_sufixo['percentual_pagar'] = valor_percentual
+            basepagtos_sufixo['valor_pago'] = basepagtos_sufixo['soma'] * basepagtos_sufixo['percentual_pagar']
+            basepagtos_sufixo['principal_atualizado'] = basepagtos_sufixo['valor_pago'] * basepagtos_sufixo['indice_correcao']
             basepagtos_sufixo['valor_juros'] = basepagtos_sufixo['principal_atualizado'] * (basepagtos_sufixo['taxa_juros_final_percentual'] / 100)
             
             if aplicarSELIC:
                 basepagtos_sufixo['TOTAL EM DEZ/2021'] = basepagtos_sufixo['principal_atualizado'] + basepagtos_sufixo['valor_juros']
                 basepagtos_sufixo['valor_selic'] = basepagtos_sufixo['TOTAL EM DEZ/2021'] * basepagtos_sufixo['selic_acumulada']
-                basepagtos_sufixo['TOTAL BRUTO'] = basepagtos_sufixo['TOTAL EM DEZ/2021'] + basepagtos_sufixo['valor_selic']
-                # Reordenar as colunas na ordem desejada            
+                basepagtos_sufixo['TOTAL BRUTO'] = basepagtos_sufixo['TOTAL EM DEZ/2021'] + basepagtos_sufixo['valor_selic']                            
+                
+                
+                # Reordenar as colunas na ordem desejada
                 colunas_ordenadas = colunas_basepagtos + [
-                    'percentual', 'valor_devido', 'indice_correcao', 
+                    'percentual_pagar', 'valor_pago', 'indice_correcao', 
                     'principal_atualizado', 'taxa_juros_final_percentual', 'valor_juros', 
                     'TOTAL EM DEZ/2021', 'selic_acumulada', 'valor_selic', 'TOTAL BRUTO' 
                 ]
+                
             else:
                 basepagtos_sufixo['TOTAL BRUTO'] = basepagtos_sufixo['principal_atualizado'] + basepagtos_sufixo['valor_juros']
                 # Reordenar as colunas na ordem desejada            
                 colunas_ordenadas = colunas_basepagtos + [
-                'percentual', 'valor_devido', 'indice_correcao', 
+                'percentual_pagar', 'valor_pago', 'indice_correcao', 
                 'principal_atualizado', 'taxa_juros_final_percentual', 'valor_juros', 'TOTAL BRUTO'
                 ]
 
             basepagtos_sufixo = basepagtos_sufixo[colunas_ordenadas]
 
             #info(f"\n\nacd_calculos\n[ PAGAMENTOS ADMINISTRATIVOS ]\n\n{basepagtos_sufixo}")
+            basepagtos_sufixo['percentual_pagar'] = basepagtos_sufixo['percentual_pagar'] * 100
         
 
             if not basepagtos_sufixo.empty:
-                   basepagtos_sufixo_renomeado = cls.renomear_colunas_dataframe(basepagtos_sufixo, MODELO)
+                   basepagtos_sufixo_renomeado = cls.renomear_colunas_dataframe(basepagtos_sufixo, MODELO, descricao)
                    #info(f"colunas_basepagtos:{basepagtos_sufixo_renomeado.columns}")
                    return basepagtos_sufixo_renomeado            
             return
         
 
     @classmethod
-    def ajustar_df_basecalculo(cls, basecalculo, sufixo, aplicarSELIC, selicJuros):
+    def ajustar_df_basecalculo(cls, basecalculo, sufixo, aplicarSELIC, selicJuros, descricao):
 
         if not basecalculo.empty and not sufixo.empty:
             colunas_basecalculo = basecalculo.columns.tolist()
@@ -98,19 +102,24 @@ class DataframeAjustes:
                     'indice_correcao', 'principal_atualizado', 'taxa_juros_final_percentual', 'valor_juros', 
                     'TOTAL EM DEZ/2021', 'selic_acumulada', 'valor_selic', 'TOTAL BRUTO' 
                 ]
+                # ajustar os valores das colunas (%) e TAXA SELIC                
+                basecalculo_sufixo['selic_acumulada']= basecalculo_sufixo['selic_acumulada']* 100
+                 
             else:
                 basecalculo_sufixo['TOTAL BRUTO'] = basecalculo_sufixo['principal_atualizado'] + basecalculo_sufixo['valor_juros']
                 # Reordenar as colunas na ordem desejada            
                 colunas_ordenadas = colunas_basecalculo + [
                 'indice_correcao','principal_atualizado', 'taxa_juros_final_percentual', 'valor_juros', 'TOTAL BRUTO'
                 ]
+                
 
             basecalculo_sufixo = basecalculo_sufixo[colunas_ordenadas]
+            basecalculo_sufixo['(%)'] = basecalculo_sufixo['(%)'] * 100
             
             #info(f"\n\nacd_dataframes\n[ CÁLCULO 3,17% ]\n\n{basecalculo_sufixo}")            
 
             if not basecalculo_sufixo.empty:
-                   basecalculo_sufixo_renomeado = cls.renomear_colunas_dataframe(basecalculo_sufixo, MODELO)                   
+                   basecalculo_sufixo_renomeado = cls.renomear_colunas_dataframe(basecalculo_sufixo, MODELO, descricao)                   
                    #info(f"\n\ncolunas_basecalculo:{basecalculo_sufixo_renomeado.columns}\n")
                    return basecalculo_sufixo_renomeado            
             return
@@ -118,9 +127,9 @@ class DataframeAjustes:
    
     
     @classmethod
-    def renomear_colunas_dataframe(cls, dtframe, modelo, lista_adicional=None):
+    def renomear_colunas_dataframe(cls, dtframe, modelo, dicionario_adicional=None):
         """ renomeia as colunas de um dataframe baseado no modelo passado como referência. 
-            Pode-se acrescentar novos valores ao dicionario modelo por meio da lista_adicional
+            Pode-se acrescentar novos valores ao dicionario modelo por meio do dicionario_adicional
             modelo = {
                  'datapagto': 'MÊS/ANO', 
                  'soma': 'SOMA', 
@@ -129,39 +138,51 @@ class DataframeAjustes:
                  'principal_atualizado': 'PRINCIPAL ATUALIZADO', 
                  'taxa_juros_final_percentual': 'JUROS (%)', 
                  'valor_juros': 'VALOR JUROS', 
-                 'selic_acumulada': 'TAXA SELIC A PARTIR DE DEZ/2021 (EC 113/2021)', 
+                 'selic_acumulada': 'TAXA SELIC (EC 113/2021)', 
                  'valor_selic': 'VALOR SELIC'
                  }
-            lista_adicional = [
-                    {1: 'VENCIMENTO BÁSICO'}, 
-                    {13: 'ANUENIO - ART.244, LEI 8112/90'}, 
-                    {79: 'IND TRANSPORTE DEC 3184/99'}, 
-                    {192: 'GRAT.EST.FISC.ARREC.TRIB.FED/A'}, 
-                    {220: 'FERIAS - ADICIONAL 1/3'}, 
-                    {10288: 'DECISAO JUDICIAL N TRAN JUG AT'}, 
-                    {82174: 'VANTAGEM ADMINIST. 3,17% - AT'}, 
-                    {82229: 'VANT.PEC.INDIVIDUAL-L.10698/03'}            
-            ]
+            dicionario_adicional = {
+                    1: 'VENCIMENTO BÁSICO', 
+                    13: 'ANUENIO - ART.244, LEI 8112/90', 
+                    79: 'IND TRANSPORTE DEC 3184/99', 
+                    192: 'GRAT.EST.FISC.ARREC.TRIB.FED/A', 
+                    220: 'FERIAS - ADICIONAL 1/3', 
+                    10288: 'DECISAO JUDICIAL N TRAN JUG AT', 
+                    82174: 'VANTAGEM ADMINIST. 3,17% - AT', 
+                    82229: 'VANT.PEC.INDIVIDUAL-L.10698/03'            
+            }
         """
         mapeamento = modelo.copy() # dicionário que apresenta o mapeamento dos nomes dos campos a serem substituidos
         #info(f"mapeamento:\n{mapeamento}")
         
         # Adicionar lista_cabecalho ao mapeamento já fornecido
-        if lista_adicional:
-            for dicionario in lista_adicional:
-                for chave, valor in dicionario.items():
-                    mapeamento[chave] = valor
+        # if lista_adicional:
+        #     for dicionario in lista_adicional:
+        #         for chave, valor in dicionario.items():
+        #             mapeamento[chave] = valor
 
+        # novas_colunas = []
+        # for coluna in dtframe.columns:
+        #     if coluna in mapeamento:  # Se a coluna estiver no mapeamento, substituir pelo nome descritivo
+        #         novas_colunas.append(mapeamento[coluna])
+        #     else:  # Caso contrário, manter o nome original
+        #         novas_colunas.append(coluna)
+        # dtframe.columns = novas_colunas       
+        
+        # return dtframe
+    
+        if dicionario_adicional:
+            mapeamento.update(dicionario_adicional)
+        
         novas_colunas = []
         for coluna in dtframe.columns:
-            if coluna in mapeamento:  # Se a coluna estiver no mapeamento, substituir pelo nome descritivo
+            if coluna in mapeamento:
                 novas_colunas.append(mapeamento[coluna])
-            else:  # Caso contrário, manter o nome original
+            else:
                 novas_colunas.append(coluna)
-        dtframe.columns = novas_colunas       
+        dtframe.columns = novas_colunas
         
         return dtframe
-
 
     @classmethod
     def adicionar_nova_linha_cabecalho(cls, dtframe, lista, novalinha):

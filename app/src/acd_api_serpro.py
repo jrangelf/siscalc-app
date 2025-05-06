@@ -21,22 +21,38 @@ class MatrizSerpro:
       
       #extracao = await cls.obter_rubricas(cpf, anoi, anof, orgao)
       extracao = cls.obter_rubricas(cpf, anoi, anof, orgao)
+      #info(f"extracao:\n\n{extracao}")
+
       dados_cadastrais = cls.obter_dados_cadastrais(cpf)
+      info(f"\ndados cadastrais:\n{dados_cadastrais}")
       
       unicas = Utils.obter_codigos_rubricas_ficha(extracao)
-      
+      info(f'\nunicas:\n{unicas}')
+
       # retirar apenas as que estão na base de cálculo para compor o cabeçalho
       conjunto_base = set(basecalculo+basepagamentos)
+      info(f'\nconjunto_base:\n{conjunto_base}')
+
       rubricas_cabecalho = [item for item in unicas if item in conjunto_base]
-      rubricas_com_descricao = []      
-      for rubrica in rubricas_cabecalho:          
-          resposta = ApiSerpro.obter_descricao_rubrica(rubrica)
-          if resposta and 'descricao' in resposta:
-              descricao_trim = resposta['descricao'].strip() if resposta['descricao'] else "N/A"              
-              rubricas_com_descricao.append({rubrica: descricao_trim})
-          else:              
-              rubricas_com_descricao.append({rubrica: "N/A"})
+      info(f'\n(3) rubricas cabeçalho:\n{rubricas_cabecalho}')
+
+    #   rubricas_com_descricao = []
+    #   """ resolver o problema de que se houver códigos de rubricas que já obtiveram sua descriçao
+    #       não ir novamente na api para buscar a descricao, somente as que não estiverem com seu valor
+    #       obtido da api -> acho que rubricas_com_descricao deve ser passada por referencia
+    #   """      
+    #   for rubrica in rubricas_cabecalho:          
+    #       resposta = ApiSerpro.obter_descricao_rubrica(rubrica)
+    #       if resposta and 'descricao' in resposta:
+    #           descricao_trim = resposta['descricao'].strip() if resposta['descricao'] else "N/A"              
+    #           rubricas_com_descricao.append({rubrica: descricao_trim})
+    #       else:              
+    #           rubricas_com_descricao.append({rubrica: "N/A"})
       
+    #   info(f'(3) rubricas com descricao:\n{rubricas_com_descricao}')
+
+
+
       # retirar data, codrubrica e valor da extração de rubricas
       chaves = ['datapagto', 'codrubrica', 'valor']
       rendimentos = Utils.filtrar_dados_lista_dicionarios(extracao, chaves, 'rendimento', 1)
@@ -44,7 +60,9 @@ class MatrizSerpro:
                                                             rendimentos,
                                                             basepagamentos,
                                                             termo_inicial)
-      return df_base, df_pagtos, rubricas_com_descricao
+      #return df_base, df_pagtos, rubricas_com_descricao
+      return df_base, df_pagtos, rubricas_cabecalho
+    
    
 
     @classmethod
@@ -95,7 +113,11 @@ class MatrizSerpro:
 									 termo_inicial: str) -> Tuple [pd.DataFrame, pd.DataFrame]:
 		
 
-		# converter a lista de dicionários em um DataFrame
+        info(f"basepagtos(list):\n{basepagtos}")
+        info(f"cabecalho:\n\n{cabecalho}")
+
+
+        # converter a lista de dicionários em um DataFrame
         df = pd.DataFrame(rendimentos)
 
 		# agrupar por 'datapagto' e 'codrubrica', somando os valores

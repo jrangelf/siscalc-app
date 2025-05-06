@@ -11,6 +11,7 @@ from src.api_indice import *
 from src.acd_utils import *
 
 from src.acd_dataframes import DataframeAjustes
+from src.api_serpro import ApiSerpro
 
 import pandas as pd
 
@@ -43,20 +44,21 @@ class CalculoSerpro317:
     def tabela_para_cpf(self, cpf: str, pensionista: bool = False) -> Tuple[pd.DataFrame, pd.DataFrame, List[str]]:
         """ Monta a tabela do cálculo apenas para o CPF informado. """
         #return await TabelasSerpro.tabelaTresDezessete(
-        return TabelasSerpro.tabelaTresDezessete(
-            cpf=cpf,
-            anoi=self.anoi,
-            anof=self.anof,
-            basecalculo=self.basecalculo,
-            basepgtos=self.basepgtos,
-            termo_inicial=self.termo_inicial,
-            termo_final=self.termo_final,
-            data_citacao=self.data_citacao,
-            data_atualizacao=self.data_atualizacao,
-            percentual=self.percentual,
-            orgao=self.orgao,
-            pensionista=pensionista
-        )
+        df_calculo, df_pagamentos, rubricas_cabecalho = TabelasSerpro.tabelaTresDezessete(
+                                                        cpf=cpf,
+                                                        anoi=self.anoi,
+                                                        anof=self.anof,
+                                                        basecalculo=self.basecalculo,
+                                                        basepgtos=self.basepgtos,
+                                                        termo_inicial=self.termo_inicial,
+                                                        termo_final=self.termo_final,
+                                                        data_citacao=self.data_citacao,
+                                                        data_atualizacao=self.data_atualizacao,
+                                                        percentual=self.percentual,
+                                                        orgao=self.orgao,
+                                                        pensionista=pensionista
+                                                    )
+        return df_calculo, df_pagamentos, rubricas_cabecalho
 
 
 class Calculos:
@@ -69,33 +71,40 @@ class Calculos:
                      pensionistas):
 
         campos, rubricas = Utils.extrair_campos(dict_formularios, primeiros=19, ultimos=9)
-        #info(f"[   campos   ]\n{campos}")
-        #info(f"[   rubricas   ]\n{rubricas}")
 
         anoinipagto = campos.get('anoinipagto','2002')
         anofimpagto = campos.get('anofimpagto','2009')        
         anoInicio = int(campos.get('termoinicial', '1993-01-01').split('-')[0])        
         anoFinal = int(anofimpagto)
+
         basecalculo, basepagtos = Utils.separar_codigos_rubricas_por_tipo(rubricas)        
+
         termoInicial = campos.get('termoinicial')
         termoInicial = DateTools.converter_ano_mes_dia_para_string(termoInicial)                       
         termoFinal = campos.get('termofinal')
         termoFinal = DateTools.converter_ano_mes_dia_para_string(termoFinal)
         termoFinalExtendido = '31/12/'+str(anoFinal)
+
         dataCitacao = campos.get('dtcitacao')
         dataCitacao = DateTools.converter_ano_mes_dia_para_string(dataCitacao)                         
         dataAtualizacao = campos.get('dtatualizacao')
-        dataAtualizacao = DateTools.converter_ano_mes_dia_para_string(dataAtualizacao)        
+        dataAtualizacao = DateTools.converter_ano_mes_dia_para_string(dataAtualizacao)
+
         percentual = campos.get('pagamento')
         orgao = campos.get('orgao', None)        
+        
         tabpnep = campos.get('tabpnep')
         tabjuros = campos.get('tabjuros')
+        
         verificarObito = campos.get('verificarObito')
         verificarObito = {'on': True, 'off': False}.get(verificarObito, None)        
+        
         aplicarSELIC = campos.get('aplicarSELIC')
         aplicarSELIC = {'on': True, 'off': False}.get(aplicarSELIC, None)
+        
         selicJuros = campos.get('selicJuros')
         selicJuros = {'on': True, 'off': False}.get(selicJuros, None)
+        
         lista_tabelas = ApiIndice.get_cod_nome_desc_das_tabelas()
         tabela_pnep = Utils.obter_codigo_por_descricao(lista_tabelas, tabpnep)
         tabela_juros = Utils.obter_codigo_por_descricao(lista_tabelas, tabjuros)
@@ -104,8 +113,11 @@ class Calculos:
         varios_cpf_pensionistas = campos.get('varios_cpf_pensionista', '')
         
         cpfs_ativos = [cpf.strip() for cpf in varios_cpf_ativos.split('\n') if cpf.strip()]
+        # verificar a validade da lista de cpfs.
+
 
         info(f"cpf_ativos:\n{cpfs_ativos}")
+        # separar os cpfs inválidos
   
           
         # info(f"[   campos   ]\n{campos}")
@@ -142,7 +154,7 @@ class Calculos:
         #cpf = '19459696449'
   
 
-        
+        # montar o sufixo conforme os dados do cálculo
         tabela = Tabelas(tabela_juros, tabela_pnep, dataCitacao, dataAtualizacao, termoInicial, termoFinalExtendido, aplicarSELIC, selicJuros)
         sufixo = tabela.sufixo()
 
@@ -150,6 +162,7 @@ class Calculos:
         pd.set_option('display.max_columns', None)
         pd.set_option("display.float_format", "{:.2f}".format)
 
+        # instancia o objeto calculador com os dados do cálculo
         calculador = CalculoSerpro317(anoInicio,
                                       anoFinal,
                                       basecalculo,
@@ -183,57 +196,69 @@ class Calculos:
         calculos = {}
         nao_processados = {}
         consolidado = {}
+        descricao_acumulada_rubricas = {}        
 
         for cpf in cpfs_ativos:
             try:
                 info(f"Calculando para CPF: {cpf}")
                 
-                #cabecalho_exequente = montar_cabecalho_ativo()
-                basecalculo, basepagtos, rubricas = calculador.tabela_para_cpf(cpf)
-                rubricas_dict = {chave: valor for item in rubricas for chave, valor in item.items()}
+                '''aqui deve ser verificada a validade do cpf'''
 
-                basepagtos_sufixo = DataframeAjustes.ajustar_df_basepagtos(basepagtos=basepagtos, 
+                #cabecalho_exequente = montar_cabecalho_ativo()
+                df_basecalculo, df_basepagtos, rubricas_cabecalho = calculador.tabela_para_cpf(cpf) # chama TabelasSerpro.tabelaTresDezessete(..)
+                
+                descricao_rubricas = {}              
+
+                for rubrica in rubricas_cabecalho:                              
+                    if rubrica not in descricao_acumulada_rubricas:
+                        resposta = ApiSerpro.obter_descricao_rubrica(rubrica)
+                        if resposta and 'descricao' in resposta:
+                            #descricao_trim = resposta['descricao'].strip() if resposta['descricao'] else "N/A"
+                            descricao_trim = f"{resposta['descricao'].strip()} ({rubrica})" if resposta['descricao'] else f"N/A ({rubrica})"              
+                            descricao_acumulada_rubricas[rubrica] = descricao_trim
+                        else:              
+                            descricao_acumulada_rubricas[rubrica] = "N/A"
+                    descricao_rubricas[rubrica] = descricao_acumulada_rubricas[rubrica]                
+                
+                info(f"\n(1) descricao_rubricas:\n{descricao_rubricas}")                              
+               
+
+                basepagtos_com_sufixo = DataframeAjustes.ajustar_df_basepagtos(basepagtos=df_basepagtos, 
                                                                    sufixo=sufixo, 
                                                                    aplicarSELIC=aplicarSELIC,
                                                                    selicJuros=selicJuros, 
-                                                                   percentual=percentual)
-                #info(f"basepagtos:\n\n{basepagtos_sufixo['MESANO']}")
+                                                                   percentual=percentual,
+                                                                   descricao=descricao_rubricas)
+                #info(f"basepagtos:\n\n{basepagtos_com_sufixo}")
         
                 
-                basecalculo_sufixo = DataframeAjustes.ajustar_df_basecalculo(basecalculo=basecalculo, 
+                basecalculo_com_sufixo = DataframeAjustes.ajustar_df_basecalculo(basecalculo=df_basecalculo, 
                                                                             sufixo=sufixo, 
                                                                             aplicarSELIC=aplicarSELIC,
-                                                                            selicJuros=selicJuros)
+                                                                            selicJuros=selicJuros,
+                                                                            descricao=descricao_rubricas)
                         
-                #info(f"basecalculo:\n\n{basecalculo_sufixo}")
-                basecalculo_sufixo['(%)'] = basecalculo_sufixo['(%)'] * 100
-                basecalculo_sufixo['TAXA SELIC A PARTIR DE DEZ/2021 (EC 113/2021)']= basecalculo_sufixo['TAXA SELIC A PARTIR DE DEZ/2021 (EC 113/2021)']* 100
-                basepagtos_sufixo['TAXA SELIC A PARTIR DE DEZ/2021 (EC 113/2021)']= basepagtos_sufixo['TAXA SELIC A PARTIR DE DEZ/2021 (EC 113/2021)'] *100 
-                # lista_cabecalho_basepagtos = basepagtos_sufixo.columns.tolist()
-                # #info(f'lista_cabeçalho_basepagtos:\n{lista_cabecalho_basepagtos}')
-                # #info(f'rubricas:\n{rubricas_dict}')
-                # basepagtos_sufixo_cabecalho = DataframeAjustes.adicionar_nova_linha_cabecalho(basepagtos_sufixo,
-                #                                                                               lista_cabecalho_basepagtos, 
-                #                                                                               rubricas_dict)
+                #info(f"BASE DE CÁLCULO:\n\n{basecalculo_com_sufixo}")
                 
-                # lista_cabecalho_basecalculo = list(basecalculo_sufixo.columns)
-                # #info(f'lista_cabeçalho_basecalculo:\n{lista_cabecalho_basecalculo}')
-                # basecalculo_sufixo_cabecalho = DataframeAjustes.adicionar_nova_linha_cabecalho(basecalculo_sufixo,
-                #                                                                                lista_cabecalho_basecalculo, 
-                #                                                                                rubricas_dict)
+                # basecalculo_sufixo['(%)'] = basecalculo_sufixo['(%)'] * 100
+                # basecalculo_sufixo['TAXA SELIC (EC 113/2021)']= basecalculo_sufixo['TAXA SELIC (EC 113/2021)']* 100
+                # basepagtos_sufixo['TAXA SELIC (EC 113/2021)']= basepagtos_sufixo['TAXA SELIC (EC 113/2021)'] *100
+                # 
+                # aqui pode substituir o 1995-07-01 por 07/1995 
+                
 
                 calculos[cpf] = {                    
-                    'pagamentos': basepagtos_sufixo,    # Primeiro DataFrame
-                    'calculo317': basecalculo_sufixo   # Segundo DataFrame
+                    'pagamentos': basepagtos_com_sufixo,    # Primeiro DataFrame
+                    'calculo317': basecalculo_com_sufixo   # Segundo DataFrame
                                     
                 }
                 
             except Exception as e:
-                info(f"Erro ao calcular para CPF {cpf}: {e}")
+                info(f"\nErro ao calcular para CPF {cpf}: {e}")
                 nao_processados[cpf] = None        
 
         # info(f"nao calculados:{nao_processados}")
-        info(f"calculos:\n\n{calculos}")
+        #info(f"calculos:\n\n{calculos}")
 
         
         return calculos    

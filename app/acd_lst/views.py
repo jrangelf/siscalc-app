@@ -41,6 +41,7 @@ from src.acd_gera_excel import *
 
 from src.configura_debug import *
 from src.acd_datetools import DateTools
+from src.acd_constantes import TABELAS_INDICES, TABELAS_JUROS
 
 import pandas as pd
 
@@ -548,11 +549,16 @@ def calculo317(request):
 		form = ObitoForm()
 		lista_tabelas = ApiIndice.get_lista_completa_das_tabelas()
 		
-		teste = [[item[0], item[1], item[2]] for item in lista_tabelas if 200 <= item[0] < 400]
-		#info(f'teste:\n{teste}')
+		# #info(f'lista_tabelas:\n{lista_tabelas}')
+		# teste = [[item[0], item[1], item[2]] for item in lista_tabelas if 200 <= item[0] < 400]
+		# #info(f'teste:\n{teste}')
 
-		lista_tabelas_indices = [item[1] for item in lista_tabelas if 200 <= item[0] < 300]
-		lista_tabelas_juros = [item[1] for item in lista_tabelas if 300 < item[0] < 312]
+		# lista_tabelas_indices = [item[1] for item in lista_tabelas if 200 <= item[0] < 300]
+		# lista_tabelas_juros = [item[1] for item in lista_tabelas if 300 < item[0] < 312]
+
+		lista_tabelas_indices = [item[1] for item in lista_tabelas if item[0] in TABELAS_INDICES]
+		lista_tabelas_juros = [item[1] for item in lista_tabelas if item[0] in TABELAS_JUROS]
+
 
 		#info(f'pnep:\n{lista_tabelas_indices}\njuros:\n{lista_tabelas_juros}')
 		
